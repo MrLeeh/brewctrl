@@ -1,0 +1,9 @@
+{% macro decimal_field(field, suffix=None, readonly=False) %}
+  <div class="col-sm-3 form-group">
+    <label for="temp" class="control-label">{{ field.label }}</label>
+    <div class="input-group">
+      <input class="form-control" type="text" id="{{ field.name }}"{% if readonly %}, readonly{% endif %}>
+      <div class="input-group-addon">{{ suffix }}</div>
+    </div>
+  </div>
+{% endmacro %}
