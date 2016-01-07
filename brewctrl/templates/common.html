@@ -1,8 +1,11 @@
 {% macro decimal_field(field, suffix=None, readonly=False, submit_btn=False) %}
+
   <div class="form-group col-md-3 {% if field.errors %} error{% endif %}">
     {{ field.label(class="control-label") }}
     <div class="input-group">
-      <div class="input-group-addon">{{ suffix }}</div>
+      {% if suffix %}
+        <div class="input-group-addon">{{ suffix }}</div>
+      {% endif %}
       {{ field(class="form-control", readonly=readonly) }}
       {% if submit_btn %}
         <span class="input-group-btn">

@@ -11,6 +11,7 @@
   <script src="/static/plotly.min.js"></script>
   <script type="text/javascript" charset="utf-8">
       $(document).ready(function(){
+        document.getElementById('nav_temp').className="active"
         namespace = '/processdata';
         var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
 
@@ -28,6 +29,7 @@
         socket.on('pd_temp', function(data) {
           console.log(data)
           $('#{{ form.cur_temp.name }}').val(data.temp.toFixed(1));
+          $('#{{ form.cur_state.name }}').val(data.state);
 
           // plot current temp
           graphs[0].data[0].x.push(data.time);
@@ -49,6 +51,8 @@
       <form method="post">
           {{ decimal_field(form.cur_sp, "°C", submit_btn=True) }}
           {{ decimal_field(form.cur_temp, "°C", readonly=True) }}
+          <div class="col-md-3"></div>
+          {{ decimal_field(form.cur_state, readonly=True) }}
       </form>
     </div>
     {% for id in ids %}

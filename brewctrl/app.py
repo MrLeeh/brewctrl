@@ -35,10 +35,12 @@ REFRESH_TIME = 1
 current_page = Pages.HOME
 thread = None
 cur_sp = 20
+cur_heating = False
+cur_state = "Heizung aus"
 
 # temperature data buffer
 temp_data = dict(x=[], y=[], type='scatter', name='Temperatur °C')
-sp_data = dict(x=[], y=[], type='scatter', name='Sollwert °C')
+sp_data = dict(x=[], y=[], type='scatter', name='Sollwert    °C')
 
 # graph data
 graphs = [
@@ -58,15 +60,18 @@ socketio = SocketIO(app)
 
 def background_thread():
     global current_page
-    global cur_sp
-    global temp_data
-    global sp_data
+    global cur_sp, cur_heating, cur_state
+    global temp_data, sp_data
 
     while True:
         time.sleep(REFRESH_TIME)
         # current values
         cur_time = str(datetime.now())
         cur_temp = read_temp()
+
+        # current state
+        cur_heating = cur_temp < cur_sp
+        cur_state = "Heizung ein" if cur_heating else "Heizung aus"
 
         # save temp data
         temp_data['x'].append(cur_time)
@@ -82,7 +87,8 @@ def background_thread():
                 {
                     'time': cur_time,
                     'temp': cur_temp,
-                    'sp': cur_sp
+                    'sp': cur_sp,
+                    'state': cur_state
                 },
                 namespace='/processdata'
             )
@@ -111,6 +117,8 @@ def handle_temp():
     if request.method == 'POST' and form.validate():
         cur_sp = float(form.cur_sp.data)
 
+    form.cur_sp.data = cur_sp
+    form.cur_state.data = cur_state
     ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
     graph_json = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template(
