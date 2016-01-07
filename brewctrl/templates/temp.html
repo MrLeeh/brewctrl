@@ -4,7 +4,7 @@
 
 {% set title = 'Temperatur' %}
 
-{% block title %} Brewctrl - Temperatur {% endblock %}
+{% block title %} Brewctrl - Temperatur j{% endblock %}
 
 {% block main %}
   <script src="/static/socket.io-1.3.7.js"></script>
@@ -29,8 +29,13 @@
           console.log(data)
           $('#{{ form.cur_temp.name }}').val(data.temp.toFixed(1));
 
+          // plot current temp
           graphs[0].data[0].x.push(data.time);
           graphs[0].data[0].y.push(data.temp);
+
+          // plot current setpoint
+          graphs[0].data[1].x.push(data.time);
+          graphs[0].data[1].y.push(data.sp);
 
           Plotly.redraw(ids[0]);
         });
@@ -41,8 +46,8 @@
   <legend> {{ title }}</legend>
   <div class="well">
     <div class="row">
-      <form>
-          {{ decimal_field(form.cur_sp, "°C") }}
+      <form method="post">
+          {{ decimal_field(form.cur_sp, "°C", submit_btn=True) }}
           {{ decimal_field(form.cur_temp, "°C", readonly=True) }}
       </form>
     </div>

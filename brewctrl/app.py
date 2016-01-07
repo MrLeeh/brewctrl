@@ -34,14 +34,16 @@ ASYNC_MODE = 'eventlet'
 REFRESH_TIME = 1
 current_page = Pages.HOME
 thread = None
+cur_sp = 20
 
 # temperature data buffer
-temp_data = dict(x=[], y=[], type='scatter', name='temp °C')
+temp_data = dict(x=[], y=[], type='scatter', name='Temperatur °C')
+sp_data = dict(x=[], y=[], type='scatter', name='Sollwert °C')
 
 # graph data
 graphs = [
     dict(
-        data=[temp_data],
+        data=[temp_data, sp_data],
         layout=dict(
             title="Temperaturverlauf"
         )
@@ -56,7 +58,9 @@ socketio = SocketIO(app)
 
 def background_thread():
     global current_page
+    global cur_sp
     global temp_data
+    global sp_data
 
     while True:
         time.sleep(REFRESH_TIME)
@@ -68,12 +72,17 @@ def background_thread():
         temp_data['x'].append(cur_time)
         temp_data['y'].append(cur_temp)
 
+        # save setpoint data
+        sp_data['x'].append(cur_time)
+        sp_data['y'].append(cur_sp)
+
         if current_page == Pages.TEMPERATURE:
             socketio.emit(
                 'pd_temp',
                 {
                     'time': cur_time,
-                    'temp': cur_temp
+                    'temp': cur_temp,
+                    'sp': cur_sp
                 },
                 namespace='/processdata'
             )
@@ -85,12 +94,13 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/temp')
+@app.route('/temp', methods=['GET', 'POST'])
 def handle_temp():
     global thread
     global current_page
+    global cur_sp
 
-    form = TempForm()
+    form = TempForm(request.form)
     current_page = Pages.TEMPERATURE
 
     if thread is None:
@@ -98,6 +108,11 @@ def handle_temp():
         thread.daemon = True
         thread.start()
 
+    if request.method == 'POST' and form.validate():
+        cur_sp = float(form.cur_sp.data)
+
     ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
     graph_json = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
-    return render_template('temp.html', form=form, ids=ids, graphJSON=graph_json)
+    return render_template(
+        'temp.html', form=form, ids=ids, graphJSON=graph_json
+    )

@@ -1,9 +1,19 @@
-{% macro decimal_field(field, suffix=None, readonly=False) %}
-  <div class="col-sm-3 form-group">
-    <label for="temp" class="control-label">{{ field.label }}</label>
+{% macro decimal_field(field, suffix=None, readonly=False, submit_btn=False) %}
+  <div class="form-group col-md-3 {% if field.errors %} error{% endif %}">
+    {{ field.label(class="control-label") }}
     <div class="input-group">
-      <input class="form-control" type="text" id="{{ field.name }}"{% if readonly %}, readonly{% endif %}>
       <div class="input-group-addon">{{ suffix }}</div>
+      {{ field(class="form-control", readonly=readonly) }}
+      {% if submit_btn %}
+        <span class="input-group-btn">
+          <button class="btn" type="submit"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></button>
+        </span>
+      {% endif %}
+
     </div>
+    {% for error in field.errors %}
+     <span class="help-inline">{{ error }}</span>
+    {% endfor %}
   </div>
+
 {% endmacro %}

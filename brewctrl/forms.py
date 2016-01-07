@@ -7,6 +7,7 @@ licensed under the MIT license
 """
 
 from wtforms import Form, DecimalField
+from wtforms.validators import required
 
 
 class TempForm(Form):
