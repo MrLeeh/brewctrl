@@ -1,6 +1,7 @@
 flask
 flask-script
 flask-socketio
+flask-sqlalchemy
 plotly
 WTForms
 eventlet

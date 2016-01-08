@@ -14,14 +14,14 @@ from enum import Enum
 
 import plotly
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
+
+from .control import TempController
+from .forms import TempForm
 
 # monkey patching for usage of background threads
 import eventlet
 eventlet.monkey_patch()
-
-from .control import TempController
-from .forms import TempForm
 
 
 class Pages(Enum):
@@ -53,7 +53,7 @@ graphs = [
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'my secret key'
+app.config.from_object('brewctrl.config')
 socketio = SocketIO(app)
 
 
