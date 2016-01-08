@@ -14,10 +14,12 @@ from enum import Enum
 
 import plotly
 from flask import Flask, render_template, request
+from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
 from .control import TempController
 from .forms import TempForm
+from .models import Base
 
 # monkey patching for usage of background threads
 import eventlet
@@ -54,6 +56,8 @@ graphs = [
 
 app = Flask(__name__)
 app.config.from_object('brewctrl.config')
+db = SQLAlchemy(app)
+db.Model = Base
 socketio = SocketIO(app)
 
 
