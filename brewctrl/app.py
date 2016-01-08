@@ -20,7 +20,7 @@ from flask_socketio import SocketIO, emit
 import eventlet
 eventlet.monkey_patch()
 
-from .control import read_temp
+from .control import TempController
 from .forms import TempForm
 
 
@@ -33,14 +33,13 @@ class Pages(Enum):
 ASYNC_MODE = 'eventlet'
 REFRESH_TIME = 1
 current_page = Pages.HOME
+temp_ctrl = TempController()
 thread = None
-cur_sp = 20
-cur_heating = False
 cur_state = "Heizung aus"
 
 # temperature data buffer
-temp_data = dict(x=[], y=[], type='scatter', name='Temperatur °C')
-sp_data = dict(x=[], y=[], type='scatter', name='Sollwert    °C')
+temp_data = dict(x=[], y=[], type='scatter', name='Temperatur [°C]')
+sp_data = dict(x=[], y=[], type='scatter', name='Sollwert [°C]')
 
 # graph data
 graphs = [
@@ -60,34 +59,33 @@ socketio = SocketIO(app)
 
 def background_thread():
     global current_page
-    global cur_sp, cur_heating, cur_state
     global temp_data, sp_data
 
     while True:
         time.sleep(REFRESH_TIME)
         # current values
         cur_time = str(datetime.now())
-        cur_temp = read_temp()
+
+        temp_ctrl.process()
 
         # current state
-        cur_heating = cur_temp < cur_sp
-        cur_state = "Heizung ein" if cur_heating else "Heizung aus"
+        cur_state = "Heizung ein" if temp_ctrl.heater_on else "Heizung aus"
 
         # save temp data
         temp_data['x'].append(cur_time)
-        temp_data['y'].append(cur_temp)
+        temp_data['y'].append(temp_ctrl.temp)
 
         # save setpoint data
         sp_data['x'].append(cur_time)
-        sp_data['y'].append(cur_sp)
+        sp_data['y'].append(temp_ctrl.sp)
 
         if current_page == Pages.TEMPERATURE:
             socketio.emit(
                 'pd_temp',
                 {
                     'time': cur_time,
-                    'temp': cur_temp,
-                    'sp': cur_sp,
+                    'temp': temp_ctrl.temp,
+                    'sp': temp_ctrl.sp,
                     'state': cur_state
                 },
                 namespace='/processdata'
@@ -115,9 +113,9 @@ def handle_temp():
         thread.start()
 
     if request.method == 'POST' and form.validate():
-        cur_sp = float(form.cur_sp.data)
+        temp_ctrl.sp = float(form.cur_sp.data)
 
-    form.cur_sp.data = cur_sp
+    form.cur_sp.data = temp_ctrl.sp
     form.cur_state.data = cur_state
     ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
     graph_json = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)

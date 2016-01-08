@@ -51,6 +51,29 @@ def read_temp():
             return temp_c
 
 
+class TempController:
+
+    def __init__(self, parent=None):
+        self.active = False
+        self.heater_on = False
+        self.sp = 20
+        self._temp = 20
+        self.bandwith = 1.0
+
+    def process(self):
+        self._temp = read_temp()
+
+        if ((self.temp < self.sp + self.bandwith and self.heater_on) or
+                (self.temp < self.sp - self.bandwith and not self.heater_on)):
+            self.heater_on = True
+        elif self.temp >= self.sp + self.bandwith:
+            self.heater_on = False
+
+    # current temperature readonly propety
+    @property
+    def temp(self):
+        return self._temp
+
 
 if __name__ == '__main__':
     print(read_temp())
