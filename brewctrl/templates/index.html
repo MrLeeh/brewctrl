@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% set title = 'Brewctrl' %}
+{% set title = 'Maischeverlauf' %}
 
 {% block title %}Brewctrl - Home{% endblock %}
 
@@ -20,9 +20,8 @@
     </script>
 
     <legend> {{ title }} </legend>
-    <div class="col-md-6 well">
-      <legend>Maischeverlauf</legend>
-      <table class="table">
+    <div class="col-md-6">
+      <table class="table table-hover">
         <th>Schritt</th>
         <th align="center">Temperatur</th>
         <th align="center">Timer</th>
@@ -32,7 +31,7 @@
             <td>{{ step.name }}</td>
             <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
             <td align="center">{{ "{} min".format(step.timer) }}</td>
-            <td><span class="glyphicon glyphicon-pencil"></span></td>
+            <td><a href="{{ url_for('handle_edit', step_id=step.id) }}"><span class="glyphicon glyphicon-pencil"></span></a></td>
           </tr>
         {% endfor %}
       </table>

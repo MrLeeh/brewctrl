@@ -26,7 +26,7 @@ class Step(Base):
     id = Column(Integer, primary_key=True)
     order = Column(Integer())
     name = Column(String(80))
-    temp = Column(Float())
+    temp = Column(Integer())
     timer = Column(Integer())
 
     def __repr__(self):

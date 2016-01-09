@@ -13,12 +13,12 @@ from threading import Thread
 from enum import Enum
 
 import plotly
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for, redirect, abort
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
 from .control import TempController
-from .forms import TempForm
+from .forms import TempForm, EditForm
 from .models import Base, Step
 
 # monkey patching for usage of background threads
@@ -127,3 +127,19 @@ def handle_temp():
     return render_template(
         'temp.html', form=form, ids=ids, graphJSON=graph_json
     )
+
+
+@app.route('/steps/<int:step_id>/edit/', methods=['GET', 'POST'])
+def handle_edit(step_id):
+    step = db.session.query(Step).get(step_id)
+    if step is None:
+        abort(404)
+
+    form = EditForm(request.form, step)
+
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(step)
+        db.session.commit()
+        return redirect(url_for('index'))
+
+    return render_template('edit.html', form=form)
