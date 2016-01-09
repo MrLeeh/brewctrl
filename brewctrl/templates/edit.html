@@ -2,7 +2,11 @@
 
 {% from 'common.html' import decimal_field, edit_field %}
 
-{% set title = 'Maischritt bearbeiten' %}
+{% if request.endpoint.endswith('add_step') %}
+  {% set title = 'Maischeschritt hinzufügen' %}
+{% else %}
+  {% set title = 'Maischeschritt bearbeiten' %}
+{% endif %}
 
 {% block title %}Brewctrl - Home{% endblock %}
 

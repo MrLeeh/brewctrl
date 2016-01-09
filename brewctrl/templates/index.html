@@ -25,7 +25,7 @@
         <th>Schritt</th>
         <th align="center">Temperatur</th>
         <th align="center">Timer</th>
-        <th/>
+        <th><a href="{{ url_for('handle_add_step') }}"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></th>
         {% for step in steps %}
           <tr>
             <td>{{ step.name }}</td>

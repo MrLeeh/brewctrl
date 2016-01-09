@@ -129,6 +129,23 @@ def handle_temp():
     )
 
 
+@app.route('/steps/create/', methods=['GET', 'POST'])
+def handle_add_step():
+    step = Step()
+    db.session.add(step)
+
+    form = EditForm(request.form, step)
+
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(step)
+        step.order = len(db.session.query(Step).all()) - 1
+        print(step.order)
+        db.session.commit()
+        return redirect(url_for('index'))
+
+    return render_template('edit.html', form=form)
+
+
 @app.route('/steps/<int:step_id>/edit/', methods=['GET', 'POST'])
 def handle_edit(step_id):
     step = db.session.query(Step).get(step_id)
