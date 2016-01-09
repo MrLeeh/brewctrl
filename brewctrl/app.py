@@ -19,7 +19,7 @@ from flask_socketio import SocketIO
 
 from .control import TempController
 from .forms import TempForm
-from .models import Base
+from .models import Base, Step
 
 # monkey patching for usage of background threads
 import eventlet
@@ -99,7 +99,8 @@ def background_thread():
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html')
+    steps = db.session.query(Step).order_by(Step.order).all()
+    return render_template('index.html', steps=steps)
 
 
 @app.route('/temp', methods=['GET', 'POST'])

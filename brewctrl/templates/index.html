@@ -20,11 +20,22 @@
     </script>
 
     <legend> {{ title }} </legend>
-    <div class="well">
-      <div class="row">
-        Home
-      </div>
+    <div class="col-md-6 well">
+      <legend>Maischeverlauf</legend>
+      <table class="table">
+        <th>Schritt</th>
+        <th align="center">Temperatur</th>
+        <th align="center">Timer</th>
+        <th/>
+        {% for step in steps %}
+          <tr>
+            <td>{{ step.name }}</td>
+            <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
+            <td align="center">{{ "{} min".format(step.timer) }}</td>
+            <td><span class="glyphicon glyphicon-pencil"></span></td>
+          </tr>
+        {% endfor %}
+      </table>
     </div>
-
 {% endblock %}
 
