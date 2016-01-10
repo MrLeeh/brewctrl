@@ -20,18 +20,21 @@
     </script>
 
     <legend> {{ title }} </legend>
-    <div class="col-md-6">
+    <div class="col-md-offset-3 col-md-6">
       <table class="table table-hover">
         <th>Schritt</th>
         <th align="center">Temperatur</th>
         <th align="center">Timer</th>
-        <th><a href="{{ url_for('handle_add_step') }}"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></th>
+        <th align="center"><a href="{{ url_for('handle_add_step') }}"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></th>
         {% for step in steps %}
           <tr>
             <td>{{ step.name }}</td>
             <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
             <td align="center">{{ "{} min".format(step.timer) }}</td>
-            <td><a href="{{ url_for('handle_edit', step_id=step.id) }}"><span class="glyphicon glyphicon-pencil"></span></a></td>
+            <td align="center">
+              <a href="{{ url_for('handle_edit', step_id=step.id) }}"><span class="glyphicon glyphicon-pencil"></span></a>
+              <a class="step-delete-link" href="#" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}"><span class="glyphicon glyphicon-trash"></span></a>
+            </td>
           </tr>
         {% endfor %}
       </table>

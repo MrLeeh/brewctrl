@@ -13,7 +13,8 @@ from threading import Thread
 from enum import Enum
 
 import plotly
-from flask import Flask, render_template, request, url_for, redirect, abort
+from flask import Flask, render_template, request, url_for, redirect, abort, \
+    jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
@@ -160,3 +161,16 @@ def handle_edit(step_id):
         return redirect(url_for('index'))
 
     return render_template('edit.html', form=form)
+
+
+@app.route('/steps/<int:step_id>/delete/', methods=['DELETE'])
+def delete_step(step_id):
+    print('Delete?')
+    step = db.session.query(Step).get(step_id)
+    if step is None:
+        response = jsonify({'status': 'Not found'})
+        response.status = 404
+        return response
+    db.session.delete(step)
+    db.session.commit()
+    return jsonify({'status': 'OK'})
