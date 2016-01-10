@@ -210,3 +210,19 @@ def delete_step(step_id):
     db.session.delete(step)
     db.session.commit()
     return jsonify({'status': 'OK'})
+
+
+@socketio.on('step_moved', namespace='/brewctrl')
+def step_moved(data):
+    steps = db.session.query(Step).order_by(Step.order).all()
+    src = data['start']
+    src_step = next(filter(lambda x: x.order == src, steps))
+
+    dst = data['end']
+    dst_step = next(filter(lambda x: x.order == dst, steps))
+
+    src_step.order = dst
+    dst_step.order = src
+
+    db.session.commit()
+    print(src_step)
