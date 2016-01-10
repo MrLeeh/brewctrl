@@ -131,7 +131,7 @@ def handle_temp():
 
 
 @app.route('/steps/create/', methods=['GET', 'POST'])
-def handle_add_step():
+def add_step():
     step = Step()
     db.session.add(step)
 
@@ -148,7 +148,7 @@ def handle_add_step():
 
 
 @app.route('/steps/<int:step_id>/edit/', methods=['GET', 'POST'])
-def handle_edit(step_id):
+def edit_step(step_id):
     step = db.session.query(Step).get(step_id)
     if step is None:
         abort(404)
