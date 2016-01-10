@@ -100,8 +100,44 @@ def background_thread():
 @app.route('/')
 @app.route('/index')
 def index():
+
     steps = db.session.query(Step).order_by(Step.order).all()
-    return render_template('index.html', steps=steps)
+    total_time = 0
+    x, y = [], []
+    for step in steps:
+        x.append(total_time)
+        y.append(step.temp)
+        total_time += (step.timer)
+        x.append(total_time)
+        y.append(step.temp)
+
+    x.append(total_time)
+    y.append(step.temp)
+
+    graph = dict(
+        data=[
+            dict(x=x, y=y, mode='lines', name='Sollwert [°C]')
+        ],
+        layout=dict(
+            title="Temperaturverlauf",
+            height=250,
+            margin=dict(
+                l=40,
+                r=40,
+                b=40,
+                t=40,
+                pad=0
+            ),
+            xaxis=dict(
+                title="Zeit [min]"
+            ),
+            yaxis=dict(
+                title='Temperatur [°C]'
+            )
+        )
+    )
+    graph_json = json.dumps(graph, cls=plotly.utils.PlotlyJSONEncoder)
+    return render_template('index.html', steps=steps, graphJSON=graph_json)
 
 
 @app.route('/temp', methods=['GET', 'POST'])
