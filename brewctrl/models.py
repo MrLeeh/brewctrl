@@ -28,6 +28,7 @@ class Step(Base):
     name = Column(String(80))
     temp = Column(Integer())
     timer = Column(Integer())
+    comment = Column(Text())
 
     def __repr__(self):
         return '<{self.__class__.__name__}: {self.id}{self.name}>'.format(
