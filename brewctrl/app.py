@@ -62,6 +62,22 @@ db.Model = Base
 socketio = SocketIO(app)
 
 
+def create_steps_graph(steps):
+    total_time = 0
+    x, y = [], []
+    for step in steps:
+        x.append(total_time)
+        y.append(step.temp)
+        total_time += (step.timer)
+        x.append(total_time)
+        y.append(step.temp)
+
+    x.append(total_time)
+    y.append(step.temp)
+
+    return x, y
+
+
 def background_thread():
     global current_page
     global temp_data, sp_data
@@ -100,19 +116,8 @@ def background_thread():
 @app.route('/')
 @app.route('/index')
 def index():
-
     steps = db.session.query(Step).order_by(Step.order).all()
-    total_time = 0
-    x, y = [], []
-    for step in steps:
-        x.append(total_time)
-        y.append(step.temp)
-        total_time += (step.timer)
-        x.append(total_time)
-        y.append(step.temp)
-
-    x.append(total_time)
-    y.append(step.temp)
+    x, y = create_steps_graph(steps)
 
     graph = dict(
         data=[
@@ -215,14 +220,32 @@ def delete_step(step_id):
 @socketio.on('step_moved', namespace='/brewctrl')
 def step_moved(data):
     steps = db.session.query(Step).order_by(Step.order).all()
-    src = data['start']
+
+    # source step
+    src = data['src']
     src_step = next(filter(lambda x: x.order == src, steps))
 
-    dst = data['end']
+    # destination step
+    dst = data['dst']
     dst_step = next(filter(lambda x: x.order == dst, steps))
 
-    src_step.order = dst
-    dst_step.order = src
+    steps.remove(src_step)
+    steps.insert(
+        steps.index(dst_step)
+        if src > dst else steps.index(dst_step) + 1, src_step
+    )
+
+    for i, step in enumerate(steps):
+        step.order = i
 
     db.session.commit()
-    print(src_step)
+
+    x, y = create_steps_graph(steps)
+    socketio.emit(
+        'steps',
+        {
+            'time': x,
+            'sp': y,
+        },
+        namespace='/brewctrl'
+    )

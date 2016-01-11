@@ -41,9 +41,20 @@
 
       $("#sort tbody").sortable({
         stop: function(event, ui) {
-          socket.emit('step_moved', {'start': start_pos, 'end': ui.item.index(), 'item': ui.item});
+          socket.emit('step_moved', {'src': start_pos, 'dst': ui.item.index(), 'item': ui.item});
         }
       });
+
+      // new graph
+      socket.on('steps', function(data) {
+          console.log(data)
+
+          // plot current temp
+          graph.data[0].x = data.time;
+          graph.data[0].y = data.sp;
+
+          Plotly.redraw('graph');
+        });
     });
   </script>
 
