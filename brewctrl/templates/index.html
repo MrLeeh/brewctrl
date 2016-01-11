@@ -57,6 +57,12 @@
         });
     });
   </script>
+  <style>
+    .centering {
+        float: none;
+        margin: 0 auto;
+    }
+  </style>
 
   <legend> {{ title }} </legend>
   <div class="row">
@@ -98,7 +104,17 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-offset-3 col-md-6 well">
+    <div class="col-md-offset-3 col-md-6 well well-md">
+      <div class="block center">
+        <button class="btn btn-primary"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+        <span class="" style="font-size: 20pt; vertical-align: middle; margin: 15px">00:00:00</span>
+        <button class="btn"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
+        <button class="btn"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-offset-3 col-md-6">
       <div id="graph">
       </div>
     </div>
