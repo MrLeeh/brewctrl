@@ -206,7 +206,6 @@ def edit_step(step_id):
 
 @app.route('/steps/<int:step_id>/delete/', methods=['DELETE'])
 def delete_step(step_id):
-    print('Delete?')
     step = db.session.query(Step).get(step_id)
     if step is None:
         response = jsonify({'status': 'Not found'})
