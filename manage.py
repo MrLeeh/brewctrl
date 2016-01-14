@@ -8,13 +8,11 @@ licensed under the MIT license
 
 """
 
-import flask
 from flask.ext.script import Manager
 from brewctrl.app import app, socketio
 
 
 manager = Manager(app)
-app.config['DEBUG'] = True
 
 
 @manager.command
@@ -27,7 +25,7 @@ def run():
         app,
         host='0.0.0.0',
         port=5000,
-        use_reloader=False
+        use_reloader=True
     )
 
 

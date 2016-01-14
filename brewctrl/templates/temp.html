@@ -46,9 +46,9 @@
   </script>
 
   <legend> {{ title }}</legend>
-  <div class="well">
+  <div class>
     <div class="row">
-      <form method="post">
+      <form method="post" class="form">
           {{ decimal_field(form.cur_sp, "°C", submit_btn=True) }}
           {{ decimal_field(form.cur_temp, "°C", readonly=True) }}
           <div class="col-md-3"></div>

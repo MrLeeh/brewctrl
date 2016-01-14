@@ -13,15 +13,18 @@ from threading import Thread
 from enum import Enum
 
 import plotly
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, request, url_for, redirect, abort, \
+    jsonify
+from flask.ext.sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO
+
+from .control import TempController
+from .forms import TempForm, EditForm
+from .models import Base, Step
 
 # monkey patching for usage of background threads
 import eventlet
 eventlet.monkey_patch()
-
-from .control import TempController
-from .forms import TempForm
 
 
 class Pages(Enum):
@@ -50,6 +53,22 @@ graphs = [
         )
     )
 ]
+
+
+def create_steps_graph(steps):
+    total_time = 0
+    x, y = [], []
+    for step in steps:
+        x.append(total_time)
+        y.append(step.temp)
+        total_time += (step.timer)
+        x.append(total_time)
+        y.append(step.temp)
+
+    x.append(total_time)
+    y.append(step.temp)
+
+    return x, y
 
 
 def background_thread():
@@ -88,7 +107,9 @@ def background_thread():
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'my secret key'
+app.config.from_object('brewctrl.config')
+db = SQLAlchemy(app)
+db.Model = Base
 socketio = SocketIO(app)
 
 
@@ -101,7 +122,33 @@ if thread is None:
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html')
+    steps = db.session.query(Step).order_by(Step.order).all()
+    x, y = create_steps_graph(steps)
+
+    graph = dict(
+        data=[
+            dict(x=x, y=y, mode='lines', name='Sollwert [°C]')
+        ],
+        layout=dict(
+            title="Temperaturverlauf",
+            height=250,
+            margin=dict(
+                l=40,
+                r=40,
+                b=40,
+                t=40,
+                pad=0
+            ),
+            xaxis=dict(
+                title="Zeit [min]"
+            ),
+            yaxis=dict(
+                title='Temperatur [°C]'
+            )
+        )
+    )
+    graph_json = json.dumps(graph, cls=plotly.utils.PlotlyJSONEncoder)
+    return render_template('index.html', steps=steps, graphJSON=graph_json)
 
 
 @app.route('/temp', methods=['GET', 'POST'])
@@ -121,4 +168,84 @@ def handle_temp():
     graph_json = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template(
         'temp.html', form=form, ids=ids, graphJSON=graph_json
+    )
+
+
+@app.route('/steps/create/', methods=['GET', 'POST'])
+def add_step():
+    step = Step()
+    db.session.add(step)
+
+    form = EditForm(request.form, step)
+
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(step)
+        step.order = len(db.session.query(Step).all()) - 1
+        print(step.order)
+        db.session.commit()
+        return redirect(url_for('index'))
+
+    return render_template('edit.html', form=form)
+
+
+@app.route('/steps/<int:step_id>/edit/', methods=['GET', 'POST'])
+def edit_step(step_id):
+    step = db.session.query(Step).get(step_id)
+    if step is None:
+        abort(404)
+
+    form = EditForm(request.form, step)
+
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(step)
+        db.session.commit()
+        return redirect(url_for('index'))
+
+    return render_template('edit.html', form=form)
+
+
+@app.route('/steps/<int:step_id>/delete/', methods=['DELETE'])
+def delete_step(step_id):
+    print('Delete?')
+    step = db.session.query(Step).get(step_id)
+    if step is None:
+        response = jsonify({'status': 'Not found'})
+        response.status = 404
+        return response
+    db.session.delete(step)
+    db.session.commit()
+    return jsonify({'status': 'OK'})
+
+
+@socketio.on('step_moved', namespace='/brewctrl')
+def step_moved(data):
+    steps = db.session.query(Step).order_by(Step.order).all()
+
+    # source step
+    src = data['src']
+    src_step = next(filter(lambda x: x.order == src, steps))
+
+    # destination step
+    dst = data['dst']
+    dst_step = next(filter(lambda x: x.order == dst, steps))
+
+    steps.remove(src_step)
+    steps.insert(
+        steps.index(dst_step)
+        if src > dst else steps.index(dst_step) + 1, src_step
+    )
+
+    for i, step in enumerate(steps):
+        step.order = i
+
+    db.session.commit()
+
+    x, y = create_steps_graph(steps)
+    socketio.emit(
+        'steps',
+        {
+            'time': x,
+            'sp': y,
+        },
+        namespace='/brewctrl'
     )

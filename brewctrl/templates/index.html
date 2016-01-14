@@ -1,30 +1,123 @@
 {% extends 'base.html' %}
 
-{% set title = 'Brewctrl' %}
+{% set title = 'Maischeverlauf' %}
 
 {% block title %}Brewctrl - Home{% endblock %}
 
 {% block main %}
-    <script src="/static/socket.io-1.3.7.js"></script>
-    <script src="/static/plotly.min.js"></script>
-    <script type="text/javascript" charset="utf-8">
-        $(document).ready(function(){
-          namespace = '/brewctrl'; // change to an empty string to use the global namespace
+  <script src="/static/socket.io-1.3.7.js"></script>
+  <script src="/static/plotly.min.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    $(document).ready(function(){
+      namespace = '/brewctrl'; // change to an empty string to use the global namespace
 
-          // the socket.io documentation recommends sending an explicit package upon connection
-          // this is specially important when using the global namespace
-          var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+      // the socket.io documentation recommends sending an explicit package upon connection
+      // this is specially important when using the global namespace
+      var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
 
-          document.getElementById('nav_home').className="active"
+      var graph = {{graphJSON | safe}};
+      Plotly.plot('graph', graph.data, graph.layout);
+
+      document.getElementById('nav_home').className="active"
+
+      // Return a helper with preserved width of cells
+      var fixHelper = function(e, ui) {
+        ui.children().each(function() {
+          $(this).width($(this).width());
         });
-    </script>
+        return ui;
+      };
+      var start_pos;
 
-    <legend> {{ title }} </legend>
-    <div class="well">
-      <div class="row">
-        Home
+      $("#sort tbody").sortable({
+        helper: fixHelper
+      }).disableSelection();
+
+      $("#sort tbody").sortable({
+        start: function(event, ui) {
+          start_pos = ui.item.index();
+        }
+      });
+
+      $("#sort tbody").sortable({
+        stop: function(event, ui) {
+          socket.emit('step_moved', {'src': start_pos, 'dst': ui.item.index(), 'item': ui.item});
+        }
+      });
+
+      // new graph
+      socket.on('steps', function(data) {
+          console.log(data)
+
+          // plot current temp
+          graph.data[0].x = data.time;
+          graph.data[0].y = data.sp;
+
+          Plotly.redraw('graph');
+        });
+    });
+  </script>
+  <style>
+    .centering {
+        float: none;
+        margin: 0 auto;
+    }
+  </style>
+
+  <legend> {{ title }} </legend>
+  <div class="row">
+    <div class="col-md-offset-3 col-md-6">
+      <table id="sort" class="table table-hover">
+        <thead>
+          <tr>
+            <th>Schritt</th>
+            <th align="center">Temperatur</th>
+            <th align="center">Timer</th>
+            <th><a href="{{ url_for('add_step') }}"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></th>
+          </tr>
+        </thead>
+        <body>
+          {% for step in steps %}
+            <tr>
+              <td>{{ step.name }}</td>
+              <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
+              <td align="center">{{ "{} min".format(step.timer) }}</td>
+              <td>
+                <!-- <a href="{{ url_for('edit_step', step_id=step.id) }}"><span class="glyphicon glyphicon-pencil"></span></a> -->
+                <!-- <a class="step-delete-link" href="#" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}"><span class="glyphicon glyphicon-trash"></span></a> -->
+                <span class="dropdown">
+                  <button class="btn-xs btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                    <li><a href="{{ url_for('edit_step', step_id=step.id) }}">Bearbeiten</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a class="step-delete-link" href="#" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}">Löschen</a></li>
+                  </ul>
+                </span>
+
+              </td>
+            </tr>
+          {% endfor %}
+        </body>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-offset-3 col-md-6 well well-md">
+      <div class="block center">
+        <button class="btn btn-primary"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+        <span class="" style="font-size: 20pt; vertical-align: middle; margin: 15px">00:00:00</span>
+        <button class="btn"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
+        <button class="btn"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
       </div>
     </div>
-
+  </div>
+  <div class="row">
+    <div class="col-md-offset-3 col-md-6">
+      <div id="graph">
+      </div>
+    </div>
+  </div>
 {% endblock %}
 

@@ -7,11 +7,12 @@
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="http://bootswatch.com/united/bootstrap.css">
   <script src="/static/jquery-1.11.3.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
   <script src="/static/jquery-migrate-1.2.1.min.js"></script>
   <!-- Latest compiled and minified JavaScript -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
   {# Link any other .css or .js found in app static folder. #}
-
+  <!-- Some layout tweeks -->
   <style>
     .content {
       margin-top: 60px;
@@ -25,9 +26,24 @@
       margin: 1em 0;
     }
   </style>
+
   <script>
     $(function() {
-      {# Add page-load JavaScript here. #}
+      $(".step-delete-link").on("click", function() {
+        var delete_url = $(this).attr('data-delete-url');
+        $.ajax({
+          url: delete_url,
+          type: 'DELETE',
+          success: function(response) {
+            if (response.status == 'OK') {
+              window.location = '{{ url_for('index') }}';
+            } else {
+            alert('Delete failed.')
+          }
+        }
+        });
+        return false;
+      });
     });
   </script>
   {% block extra_head %}{% endblock extra_head %}
@@ -54,7 +70,7 @@
       </div>
     </nav>
   </div>
-  <div class="content container container-fluid">
+  <div class="content container-fluid">
     {% block main %}{% endblock main %}
   </div>
 </body>
