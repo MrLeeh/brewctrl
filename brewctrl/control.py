@@ -14,14 +14,16 @@ import time
 import random
 
 SIMULATION = False
+HEATER_PIN = 24
 
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
+os.system('gpio export {pin} out'.format(pin=HEATER_PIN))
 
 base_dir = '/sys/bus/w1/devices/'
 
 try:
-    device_folder = glob.glob(base_dir + '10*')[0]
+    device_folder = glob.glob(base_dir + '28*')[0]
     device_file = device_folder + '/w1_slave'
 except IndexError:
     print("No Temp.sensors found. Continue in simulation mode.")
@@ -51,14 +53,20 @@ def read_temp():
             return temp_c
 
 
+def set_heater_output(val: bool):
+    os.system('gpio -g write {pin} {state}'.format(
+        pin=HEATER_PIN, state=1 if val else 0
+    ))
+
+
 class TempController:
 
     def __init__(self, parent=None):
         self.active = False
-        self.heater_on = False
+        self._heater_on = False
         self.sp = 20
         self._temp = 20
-        self.bandwith = 1.0
+        self.bandwith = 0.1
 
     def process(self):
         self._temp = read_temp()
@@ -73,6 +81,15 @@ class TempController:
     @property
     def temp(self):
         return self._temp
+
+    @property
+    def heater_on(self):
+        return self._heater_on
+
+    @heater_on.setter
+    def heater_on(self, value: bool):
+        self._heater_on = value
+        set_heater_output(value)
 
 
 if __name__ == '__main__':

@@ -52,11 +52,6 @@ graphs = [
 ]
 
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'my secret key'
-socketio = SocketIO(app)
-
-
 def background_thread():
     global current_page
     global temp_data, sp_data
@@ -92,6 +87,17 @@ def background_thread():
             )
 
 
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'my secret key'
+socketio = SocketIO(app)
+
+
+if thread is None:
+    thread = Thread(target=background_thread)
+    thread.daemon = True
+    thread.start()
+
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -100,17 +106,11 @@ def index():
 
 @app.route('/temp', methods=['GET', 'POST'])
 def handle_temp():
-    global thread
     global current_page
     global cur_sp
 
     form = TempForm(request.form)
     current_page = Pages.TEMPERATURE
-
-    if thread is None:
-        thread = Thread(target=background_thread)
-        thread.daemon = True
-        thread.start()
 
     if request.method == 'POST' and form.validate():
         temp_ctrl.sp = float(form.cur_sp.data)
