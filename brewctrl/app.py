@@ -18,7 +18,7 @@ from flask import Flask, render_template, request, url_for, redirect, abort, \
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
-from .control import TempController
+from .control import TempController, set_heater_output
 from .forms import TempForm, EditForm
 from .models import Base, Step
 
