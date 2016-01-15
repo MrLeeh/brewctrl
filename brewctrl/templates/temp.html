@@ -27,19 +27,20 @@
           }
 
         socket.on('pd_temp', function(data) {
-          console.log(data)
           $('#{{ form.cur_temp.name }}').val(data.temp.toFixed(1));
           $('#{{ form.cur_state.name }}').val(data.state);
 
-          // plot current temp
-          graphs[0].data[0].x.push(data.time);
-          graphs[0].data[0].y.push(data.temp);
+          if (data.recording) {
+            // plot current temp
+            graphs[0].data[0].x.push(data.time);
+            graphs[0].data[0].y.push(data.temp);
 
-          // plot current setpoint
-          graphs[0].data[1].x.push(data.time);
-          graphs[0].data[1].y.push(data.sp);
+            // plot current setpoint
+            graphs[0].data[1].x.push(data.time);
+            graphs[0].data[1].y.push(data.sp);
 
-          Plotly.redraw(ids[0]);
+            Plotly.redraw(ids[0]);
+          };
         });
       });
 

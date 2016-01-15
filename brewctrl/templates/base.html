@@ -28,6 +28,31 @@
   </style>
 
   <script>
+    $(document).ready(function(){
+      namespace = '/brewctrl'; // change to an empty string to use the global namespace
+
+      // the socket.io documentation recommends sending an explicit package upon connection
+      // this is specially important when using the global namespace
+      var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+
+      $("#clear_data").click(function() {
+        socket.emit('clear_data', {});
+      });
+
+      $("#start_recording").click(function() {
+        socket.emit('start_recording', {});
+        $("#start_recording").addClass("disabled");
+        $("#stop_recording").removeClass("disabled");
+      });
+
+      $("#stop_recording").click(function() {
+        socket.emit('stop_recording', {});
+        $("#start_recording").removeClass("disabled");
+        $("#stop_recording").addClass("disabled");
+      });
+    });
+
+
     $(function() {
       $(".step-delete-link").on("click", function() {
         var delete_url = $(this).attr('data-delete-url');
@@ -64,7 +89,17 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
             <li id="nav_home"><a href="{{ url_for('index') }}">Home</a></li>
-            <li id="nav_temp"><a href="{{ url_for('handle_temp') }}">Temperatur</a></li>
+            <li class="dropdown">
+              <a id="nav_temp" href="{{ url_for('handle_temp') }}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Temperaturverlauf<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ url_for('handle_temp') }}">Diagramm</a></li>
+                <li role="separator" class="divider"></li>
+                <li id="start_recording"><a href="#">Aufzeichnung starten</a></li>
+                <li id="stop_recording" class="disabled"><a href="#">Aufzeichnung stoppen</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a id="clear_data" href="{{ url_for('handle_temp') }}">Aufzeichnung löschen</a></li>
+              </ul>
+            </li>
           </ul>
         </div>
       </div>

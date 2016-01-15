@@ -18,7 +18,7 @@ from flask import Flask, render_template, request, url_for, redirect, abort, \
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
-from .control import TempController, set_heater_output
+from .control import TempController
 from .forms import TempForm, EditForm
 from .models import Base, Step
 
@@ -37,8 +37,8 @@ ASYNC_MODE = 'eventlet'
 REFRESH_TIME = 1
 current_page = Pages.HOME
 temp_ctrl = TempController()
-thread = None
-cur_state = "Heizung aus"
+state = "Heizung aus"
+recording = False
 
 # temperature data buffer
 temp_data = dict(x=[], y=[], type='scatter', name='Temperatur [°C]')
@@ -72,7 +72,7 @@ def create_steps_graph(steps):
 
 
 def background_thread():
-    global current_page
+    global current_page, recording
     global temp_data, sp_data
 
     while True:
@@ -83,15 +83,16 @@ def background_thread():
         temp_ctrl.process()
 
         # current state
-        cur_state = "Heizung ein" if temp_ctrl.heater_on else "Heizung aus"
+        state = "Heizung ein" if temp_ctrl.heater_on else "Heizung aus"
 
-        # save temp data
-        temp_data['x'].append(cur_time)
-        temp_data['y'].append(temp_ctrl.temp)
+        if recording:
+            # save temp data
+            temp_data['x'].append(cur_time)
+            temp_data['y'].append(temp_ctrl.temp)
 
-        # save setpoint data
-        sp_data['x'].append(cur_time)
-        sp_data['y'].append(temp_ctrl.sp)
+            # save setpoint data
+            sp_data['x'].append(cur_time)
+            sp_data['y'].append(temp_ctrl.sp)
 
         if current_page == Pages.TEMPERATURE:
             socketio.emit(
@@ -100,12 +101,14 @@ def background_thread():
                     'time': cur_time,
                     'temp': temp_ctrl.temp,
                     'sp': temp_ctrl.sp,
-                    'state': cur_state
+                    'state': state,
+                    'recording': recording
                 },
                 namespace='/processdata'
             )
 
 
+# startup application
 app = Flask(__name__)
 app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
@@ -113,10 +116,10 @@ db.Model = Base
 socketio = SocketIO(app)
 
 
-if thread is None:
-    thread = Thread(target=background_thread)
-    thread.daemon = True
-    thread.start()
+# init background thread
+thread = Thread(target=background_thread)
+thread.daemon = True
+thread.start()
 
 
 @app.route('/')
@@ -163,7 +166,7 @@ def handle_temp():
         temp_ctrl.sp = float(form.cur_sp.data)
 
     form.cur_sp.data = temp_ctrl.sp
-    form.cur_state.data = cur_state
+    form.cur_state.data = state
     ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
     graph_json = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template(
@@ -249,3 +252,23 @@ def step_moved(data):
         },
         namespace='/brewctrl'
     )
+
+
+@socketio.on('clear_data', namespace='/brewctrl')
+def clear_data(data):
+    global temp_data, sp_data
+    for data in (temp_data, sp_data):
+        data['x'] = []
+        data['y'] = []
+
+
+@socketio.on('start_recording', namespace='/brewctrl')
+def start_recording(data):
+    global recording
+    recording = True
+
+
+@socketio.on('stop_recording', namespace='/brewctrl')
+def stop_recording(data):
+    global recording
+    recording = False

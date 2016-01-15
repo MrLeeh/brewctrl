@@ -89,7 +89,8 @@ class TempController:
     @heater_on.setter
     def heater_on(self, value: bool):
         self._heater_on = value
-        set_heater_output(value)
+        if not SIMULATION:
+            set_heater_output(value)
 
 
 if __name__ == '__main__':
