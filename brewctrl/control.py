@@ -7,27 +7,29 @@ copyright (c) 2016 by Stefan Lehmann,
 licensed under the MIT license
 
 """
-
 import os
 import glob
 import time
 import random
 
-SIMULATION = False
+# Hardware configuration
+TEMPSENSOR = '28*'
 HEATER_PIN = 24
 
+simulation_mode = False
+
+# enable gpio and onewire functions
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
 os.system('gpio export {pin} out'.format(pin=HEATER_PIN))
 
 base_dir = '/sys/bus/w1/devices/'
-
 try:
-    device_folder = glob.glob(base_dir + '28*')[0]
+    device_folder = glob.glob(base_dir + TEMPSENSOR)[0]
     device_file = device_folder + '/w1_slave'
 except IndexError:
     print("No Temp.sensors found. Continue in simulation mode.")
-    SIMULATION = True
+    simulation_mode = True
 
 
 def read_temp_raw():
@@ -38,7 +40,7 @@ def read_temp_raw():
 
 
 def read_temp():
-    if SIMULATION:
+    if simulation_mode:
         temp_c = 20. + (random.random() * 10 - 5)
         return temp_c
     else:
@@ -60,6 +62,8 @@ def set_heater_output(val: bool):
 
 
 class TempController:
+
+    """ Temperature controller """
 
     def __init__(self, parent=None):
         self.active = False
@@ -89,7 +93,7 @@ class TempController:
     @heater_on.setter
     def heater_on(self, value: bool):
         self._heater_on = value
-        if not SIMULATION:
+        if not simulation_mode:
             set_heater_output(value)
 
 

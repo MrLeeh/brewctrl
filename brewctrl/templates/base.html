@@ -94,8 +94,8 @@
               <ul class="dropdown-menu">
                 <li><a href="{{ url_for('handle_temp') }}">Diagramm</a></li>
                 <li role="separator" class="divider"></li>
-                <li id="start_recording"><a href="#">Aufzeichnung starten</a></li>
-                <li id="stop_recording" class="disabled"><a href="#">Aufzeichnung stoppen</a></li>
+                <li id="start_recording"{% if recording %} class="disabled"{% endif %}><a href="#">Aufzeichnung starten</a></li>
+                <li id="stop_recording"{% if not recording %} class="disabled"{% endif %}><a href="#">Aufzeichnung stoppen</a></li>
                 <li role="separator" class="divider"></li>
                 <li><a id="clear_data" href="{{ url_for('handle_temp') }}">Aufzeichnung löschen</a></li>
               </ul>

@@ -35,6 +35,15 @@ class Step(Base):
             self=self)
 
 
+class ProcessData(Base):
+
+    __tablename__ = 'processdata'
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime)
+    temp_setpoint = Column(Float())
+    temp = Column(Float())
+
+
 if __name__ == '__main__':
     from config import SQLALCHEMY_DATABASE_URI
     from sqlalchemy import create_engine

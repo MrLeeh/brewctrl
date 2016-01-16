@@ -62,7 +62,7 @@
         socket.emit("stop_sequence", {});
       });
 
-      socket.on('pd_sequence', function(data) {
+      socket.on('process_data', function(data) {
         if (!data.running || data.pause) {
           $("#start_sequence").children("span").removeClass("glyphicon-pause");
           $("#start_sequence").children("span").addClass("glyphicon-play");
@@ -71,7 +71,7 @@
           $("#start_sequence").children("span").removeClass("glyphicon-play");
           $("#start_sequence").children("span").addClass("glyphicon-pause");
         }
-        $("#sequence_progress").text(data.progress + " " + data.setpoint);
+        $("#sequence_progress").text(data.progress + " " + data.temp_setpoint);
       });
 
     });

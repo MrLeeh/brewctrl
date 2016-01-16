@@ -9,8 +9,7 @@ licensed under the MIT license
 import json
 import time
 from datetime import datetime
-from threading import Thread
-from enum import Enum
+from threading import Thread, Timer
 
 import plotly
 from flask import Flask, render_template, request, url_for, redirect, abort, \
@@ -18,54 +17,32 @@ from flask import Flask, render_template, request, url_for, redirect, abort, \
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
+from .config import REFRESH_TIME, NAMESPACE
 from .control import TempController
 from .forms import TempForm, EditForm
-from .models import Base, Step
+from .models import Base, Step, ProcessData
 from .util import format_td
 
 # monkey patching for usage of background threads
 import eventlet
 eventlet.monkey_patch()
 
-ASYNC_MODE = 'eventlet'
-
-# startup application
+# setup  flask application
 app = Flask(__name__)
 app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
 db.Model = Base
 socketio = SocketIO(app)
 
-
 from .sequence import Sequence
 
-
-class Pages(Enum):
-    HOME = 1
-    TEMPERATURE = 2
-
-
-# refresh time in seconds
-REFRESH_TIME = 1
-current_page = Pages.HOME
+# temperature controller
 temp_ctrl = TempController()
+# sequence controller
 sequence = Sequence()
 state = "Heizung aus"
 recording = False
-
-# temperature data buffer
-temp_data = dict(x=[], y=[], type='scatter', name='Temperatur [°C]')
-sp_data = dict(x=[], y=[], type='scatter', name='Sollwert [°C]')
-
-# graph data
-graphs = [
-    dict(
-        data=[temp_data, sp_data],
-        layout=dict(
-            title="Temperaturverlauf"
-        )
-    )
-]
+url_rule = ''
 
 
 def create_steps_graph(steps):
@@ -80,62 +57,85 @@ def create_steps_graph(steps):
 
     x.append(total_time)
     y.append(step.temp)
-
     return x, y
 
 
+def create_processdata_graph():
+    # temperature data buffer
+    temp_data = dict(x=[], y=[], type='scatter', name='Temperatur [°C]')
+    sp_data = dict(x=[], y=[], type='scatter', name='Sollwert [°C]')
+
+    for data in db.session.query(ProcessData).all():
+        temp_data['x'].append(str(data.timestamp))
+        temp_data['y'].append(data.temp)
+
+        sp_data['x'].append(str(data.timestamp))
+        sp_data['y'].append(data.temp_setpoint)
+
+    graphs = [
+        dict(
+            data=[temp_data, sp_data],
+            layout=dict(
+                title="Temperaturverlauf"
+            )
+        )
+    ]
+    return graphs
+
+
 def background_thread():
-    global current_page, recording
+    # current values
+    cur_time = datetime.now()
+
+    t = Timer(REFRESH_TIME, background_thread)
+    t.daemon = True
+    t.start()
+
+    global url_rule, recording
     global temp_data, sp_data
 
-    while True:
-        time.sleep(REFRESH_TIME)
-        # current values
-        cur_time = datetime.now()
+    sequence.process(cur_time)
+    if sequence.running and not sequence.pause:
+        temp_ctrl.sp = sequence.cur_setpoint
+    temp_ctrl.process()
 
-        sequence.process(cur_time)
-        temp_ctrl.process()
+    # current state
+    state = "Heizung ein" if temp_ctrl.heater_on else "Heizung aus"
 
-        # current state
-        state = "Heizung ein" if temp_ctrl.heater_on else "Heizung aus"
+    if recording:
+        data = ProcessData()
+        data.timestamp = cur_time
+        data.temp_setpoint = temp_ctrl.sp
+        data.temp = temp_ctrl.temp
+        db.session.add(data)
+        db.session.commit()
 
-        if recording:
-            # save temp data
-            temp_data['x'].append(str(cur_time))
-            temp_data['y'].append(temp_ctrl.temp)
+    socketio.emit(
+        'process_data',
+        {
+            'time': str(cur_time),
+            'temp': temp_ctrl.temp,
+            'temp_setpoint': temp_ctrl.sp,
+            'state': state,
+            'recording': recording,
+            'running': sequence.running,
+            'pause': sequence.pause,
+            'progress': format_td(sequence.progress),
+        },
+        namespace=NAMESPACE
+    )
 
-            # save setpoint data
-            sp_data['x'].append(str(cur_time))
-            sp_data['y'].append(temp_ctrl.sp)
-
-        if current_page == Pages.HOME:
-            socketio.emit(
-                'pd_sequence',
-                {
-                    'running': sequence.running,
-                    'pause': sequence.pause,
-                    'progress': format_td(sequence.progress),
-                    'setpoint': sequence.cur_setpoint
-                },
-                namespace='/brewctrl'
-            )
-        elif current_page == Pages.TEMPERATURE:
-            socketio.emit(
-                'pd_temp',
-                {
-                    'time': str(cur_time),
-                    'temp': temp_ctrl.temp,
-                    'sp': temp_ctrl.sp,
-                    'state': state,
-                    'recording': recording
-                },
-                namespace='/processdata'
-            )
 
 # init background thread
-thread = Thread(target=background_thread)
-thread.daemon = True
-thread.start()
+t = Timer(REFRESH_TIME, background_thread)
+t.daemon = True
+t.start()
+
+
+@app.before_request
+def before_request():
+    global url_rule
+    url_rule = str(request.url_rule)
 
 
 @app.route('/')
@@ -167,26 +167,27 @@ def index():
         )
     )
     graph_json = json.dumps(graph, cls=plotly.utils.PlotlyJSONEncoder)
-    return render_template('index.html', steps=steps, graphJSON=graph_json)
+    return render_template(
+        'index.html', steps=steps, graphJSON=graph_json, recording=recording
+    )
 
 
 @app.route('/temp', methods=['GET', 'POST'])
 def handle_temp():
-    global current_page
-    global cur_sp
-
     form = TempForm(request.form)
-    current_page = Pages.TEMPERATURE
 
     if request.method == 'POST' and form.validate():
         temp_ctrl.sp = float(form.cur_sp.data)
 
     form.cur_sp.data = temp_ctrl.sp
     form.cur_state.data = state
+
+    graphs = create_processdata_graph()
     ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
     graph_json = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template(
-        'temp.html', form=form, ids=ids, graphJSON=graph_json
+        'temp.html', form=form, ids=ids, graphJSON=graph_json,
+        recording=recording
     )
 
 
@@ -234,7 +235,7 @@ def delete_step(step_id):
     return jsonify({'status': 'OK'})
 
 
-@socketio.on('step_moved', namespace='/brewctrl')
+@socketio.on('step_moved', namespace=NAMESPACE)
 def step_moved(data):
     steps = db.session.query(Step).order_by(Step.order).all()
 
@@ -264,31 +265,29 @@ def step_moved(data):
             'time': x,
             'sp': y,
         },
-        namespace='/brewctrl'
+        namespace=NAMESPACE
     )
 
 
-@socketio.on('clear_data', namespace='/brewctrl')
+@socketio.on('clear_data', namespace=NAMESPACE)
 def clear_data(data):
-    global temp_data, sp_data
-    for data in (temp_data, sp_data):
-        data['x'] = []
-        data['y'] = []
+    db.session.query(ProcessData).delete()
+    db.session.commit()
 
 
-@socketio.on('start_recording', namespace='/brewctrl')
+@socketio.on('start_recording', namespace=NAMESPACE)
 def start_recording(data):
     global recording
     recording = True
 
 
-@socketio.on('stop_recording', namespace='/brewctrl')
+@socketio.on('stop_recording', namespace=NAMESPACE)
 def stop_recording(data):
     global recording
     recording = False
 
 
-@socketio.on('start_sequence', namespace='/brewctrl')
+@socketio.on('start_sequence', namespace=NAMESPACE)
 def start_sequence(data):
     if not sequence.running:
         sequence.start()
@@ -296,6 +295,6 @@ def start_sequence(data):
         sequence.toggle_pause()
 
 
-@socketio.on('stop_sequence', namespace='/brewctrl')
+@socketio.on('stop_sequence', namespace=NAMESPACE)
 def stop_sequence(data):
     sequence.stop()
