@@ -21,10 +21,23 @@ from flask_socketio import SocketIO
 from .control import TempController
 from .forms import TempForm, EditForm
 from .models import Base, Step
+from .util import format_td
 
 # monkey patching for usage of background threads
 import eventlet
 eventlet.monkey_patch()
+
+ASYNC_MODE = 'eventlet'
+
+# startup application
+app = Flask(__name__)
+app.config.from_object('brewctrl.config')
+db = SQLAlchemy(app)
+db.Model = Base
+socketio = SocketIO(app)
+
+
+from .sequence import Sequence
 
 
 class Pages(Enum):
@@ -33,10 +46,10 @@ class Pages(Enum):
 
 
 # refresh time in seconds
-ASYNC_MODE = 'eventlet'
 REFRESH_TIME = 1
 current_page = Pages.HOME
 temp_ctrl = TempController()
+sequence = Sequence()
 state = "Heizung aus"
 recording = False
 
@@ -78,8 +91,9 @@ def background_thread():
     while True:
         time.sleep(REFRESH_TIME)
         # current values
-        cur_time = str(datetime.now())
+        cur_time = datetime.now()
 
+        sequence.process(cur_time)
         temp_ctrl.process()
 
         # current state
@@ -87,18 +101,29 @@ def background_thread():
 
         if recording:
             # save temp data
-            temp_data['x'].append(cur_time)
+            temp_data['x'].append(str(cur_time))
             temp_data['y'].append(temp_ctrl.temp)
 
             # save setpoint data
-            sp_data['x'].append(cur_time)
+            sp_data['x'].append(str(cur_time))
             sp_data['y'].append(temp_ctrl.sp)
 
-        if current_page == Pages.TEMPERATURE:
+        if current_page == Pages.HOME:
+            socketio.emit(
+                'pd_sequence',
+                {
+                    'running': sequence.running,
+                    'pause': sequence.pause,
+                    'progress': format_td(sequence.progress),
+                    'setpoint': sequence.cur_setpoint
+                },
+                namespace='/brewctrl'
+            )
+        elif current_page == Pages.TEMPERATURE:
             socketio.emit(
                 'pd_temp',
                 {
-                    'time': cur_time,
+                    'time': str(cur_time),
                     'temp': temp_ctrl.temp,
                     'sp': temp_ctrl.sp,
                     'state': state,
@@ -106,15 +131,6 @@ def background_thread():
                 },
                 namespace='/processdata'
             )
-
-
-# startup application
-app = Flask(__name__)
-app.config.from_object('brewctrl.config')
-db = SQLAlchemy(app)
-db.Model = Base
-socketio = SocketIO(app)
-
 
 # init background thread
 thread = Thread(target=background_thread)
@@ -184,7 +200,6 @@ def add_step():
     if request.method == 'POST' and form.validate():
         form.populate_obj(step)
         step.order = len(db.session.query(Step).all()) - 1
-        print(step.order)
         db.session.commit()
         return redirect(url_for('index'))
 
@@ -271,3 +286,16 @@ def start_recording(data):
 def stop_recording(data):
     global recording
     recording = False
+
+
+@socketio.on('start_sequence', namespace='/brewctrl')
+def start_sequence(data):
+    if not sequence.running:
+        sequence.start()
+    else:
+        sequence.toggle_pause()
+
+
+@socketio.on('stop_sequence', namespace='/brewctrl')
+def stop_sequence(data):
+    sequence.stop()

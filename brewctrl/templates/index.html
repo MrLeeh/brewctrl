@@ -20,6 +20,7 @@
 
       document.getElementById('nav_home').className="active"
 
+      // Handle sorting of steps
       // Return a helper with preserved width of cells
       var fixHelper = function(e, ui) {
         ui.children().each(function() {
@@ -28,7 +29,6 @@
         return ui;
       };
       var start_pos;
-
       $("#sort tbody").sortable({
         helper: fixHelper
       }).disableSelection();
@@ -45,16 +45,35 @@
         }
       });
 
-      // new graph
+      // draw graph
       socket.on('steps', function(data) {
-          console.log(data)
+        // plot current temp
+        graph.data[0].x = data.time;
+        graph.data[0].y = data.sp;
 
-          // plot current temp
-          graph.data[0].x = data.time;
-          graph.data[0].y = data.sp;
+        Plotly.redraw('graph');
+      });
 
-          Plotly.redraw('graph');
-        });
+      $("#start_sequence").click(function() {
+        socket.emit("start_sequence", {});
+      });
+
+      $("#stop_sequence").click(function() {
+        socket.emit("stop_sequence", {});
+      });
+
+      socket.on('pd_sequence', function(data) {
+        if (!data.running || data.pause) {
+          $("#start_sequence").children("span").removeClass("glyphicon-pause");
+          $("#start_sequence").children("span").addClass("glyphicon-play");
+        }
+        else {
+          $("#start_sequence").children("span").removeClass("glyphicon-play");
+          $("#start_sequence").children("span").addClass("glyphicon-pause");
+        }
+        $("#sequence_progress").text(data.progress + " " + data.setpoint);
+      });
+
     });
   </script>
   <style>
@@ -83,8 +102,6 @@
               <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
               <td align="center">{{ "{} min".format(step.timer) }}</td>
               <td>
-                <!-- <a href="{{ url_for('edit_step', step_id=step.id) }}"><span class="glyphicon glyphicon-pencil"></span></a> -->
-                <!-- <a class="step-delete-link" href="#" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}"><span class="glyphicon glyphicon-trash"></span></a> -->
                 <span class="dropdown">
                   <button class="btn-xs btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                     <span class="caret"></span>
@@ -95,7 +112,6 @@
                     <li><a class="step-delete-link" href="#" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}">Löschen</a></li>
                   </ul>
                 </span>
-
               </td>
             </tr>
           {% endfor %}
@@ -106,10 +122,9 @@
   <div class="row">
     <div class="col-md-offset-3 col-md-6 well well-md">
       <div class="block center">
-        <button class="btn btn-primary"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
-        <span class="" style="font-size: 20pt; vertical-align: middle; margin: 15px">00:00:00</span>
-        <button class="btn"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
-        <button class="btn"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
+        <button id="start_sequence" class="btn btn-primary"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+        <button id="stop_sequence" class="btn"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
+        <span id="sequence_progress" class="" style="font-size: 20pt; vertical-align: middle; margin: 15px">00:00:00</span>
       </div>
     </div>
   </div>
