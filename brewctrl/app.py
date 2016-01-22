@@ -256,6 +256,60 @@ def edit_step(step_id):
     return render_template('edit.html', form=form)
 
 
+@app.route('/steps/<int:step_id>/insert_before/', methods=['GET', 'POST'])
+def insert_step_before(step_id):
+    ref_step = db.session.query(Step).get(step_id)
+    ref_order = ref_step.order
+    steps = db.session.query(Step).order_by(Step.order).all()
+
+    insert = False
+    for step in steps:
+        if step.id == step_id:
+            insert = True
+        if insert:
+            step.order += 1
+
+    new_step = Step()
+    new_step.order = ref_order
+    db.session.add(new_step)
+
+    form = EditForm(request.form, new_step)
+
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(new_step)
+        db.session.commit()
+        return redirect(url_for('handle_steps'))
+
+    return render_template('edit.html', form=form)
+
+
+@app.route('/steps/<int:step_id>/insert_after/', methods=['GET', 'POST'])
+def insert_step_after(step_id):
+    ref_step = db.session.query(Step).get(step_id)
+    ref_order = ref_step.order
+    steps = db.session.query(Step).order_by(Step.order).all()
+
+    insert = False
+    for step in steps:
+        if insert:
+            step.order += 1
+        elif step.id == step_id:
+            insert = True
+
+    new_step = Step()
+    new_step.order = ref_order + 1
+    db.session.add(new_step)
+
+    form = EditForm(request.form, new_step)
+
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(new_step)
+        db.session.commit()
+        return redirect(url_for('handle_steps'))
+
+    return render_template('edit.html', form=form)
+
+
 @app.route('/steps/<int:step_id>/delete/', methods=['DELETE'])
 def delete_step(step_id):
     step = db.session.query(Step).get(step_id)
@@ -315,7 +369,6 @@ def connected(data):
 
 @socketio.on('clear_data', namespace=NAMESPACE)
 def clear_data(data):
-    print('clear data')
     db.session.query(ProcessData).delete()
     db.session.commit()
 
