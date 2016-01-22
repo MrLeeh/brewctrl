@@ -54,8 +54,6 @@ def create_steps_graph(steps):
         x.append(total_time)
         y.append(step.temp)
 
-    x.append(total_time)
-    y.append(step.temp)
     return x, y
 
 
