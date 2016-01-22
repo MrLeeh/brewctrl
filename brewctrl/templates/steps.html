@@ -131,6 +131,9 @@
                   <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
                     <li><a href="{{ url_for('edit_step', step_id=step.id) }}">Bearbeiten</a></li>
                     <li role="separator" class="divider"></li>
+                    <li><a href="{{ url_for('insert_step_before', step_id=step.id) }}" type="button">Schritt davor einfügen</a></li>
+                    <li><a href="{{ url_for('insert_step_after', step_id=step.id) }}" type="button">Schritt danach einfügen</a></li>
+                    <li role="separator" class="divider"></li>
                     <li><a href="#" class="delete-step" type="button" data-toggle="modal" data-target="#myModal" data-stepname="{{ step.name }}" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}" >Löschen</a></li>
                   </ul>
                 </span>
