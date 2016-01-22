@@ -315,6 +315,7 @@ def connected(data):
 
 @socketio.on('clear_data', namespace=NAMESPACE)
 def clear_data(data):
+    print('clear data')
     db.session.query(ProcessData).delete()
     db.session.commit()
 
