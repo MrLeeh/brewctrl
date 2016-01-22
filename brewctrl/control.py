@@ -67,7 +67,7 @@ class TempController:
 
     def __init__(self, parent=None):
         self.active = False
-        self._heater_on = False
+        self._heater_enabled = False
         self.sp = 20
         self._temp = 20
         self.bandwith = 0.1
@@ -75,26 +75,34 @@ class TempController:
     def process(self):
         self._temp = read_temp()
 
-        if ((self.temp < self.sp + self.bandwith and self.heater_on) or
-                (self.temp < self.sp - self.bandwith and not self.heater_on)):
-            self.heater_on = True
+        if ((self.temp < self.sp + self.bandwith and self.heater_enabled) or
+                (self.temp < self.sp - self.bandwith and not self.heater_enabled)):
+            self.heater_enabled = True
         elif self.temp >= self.sp + self.bandwith:
-            self.heater_on = False
+            self.heater_enabled = False
 
-    # current temperature readonly propety
+    # temperature property
     @property
     def temp(self):
         return self._temp
 
+    # heater_enabled property
     @property
-    def heater_on(self):
-        return self._heater_on
+    def heater_enabled(self):
+        return self._heater_enabled
 
-    @heater_on.setter
-    def heater_on(self, value: bool):
-        self._heater_on = value
+    @heater_enabled.setter
+    def heater_enabled(self, value: bool):
+        self._heater_enabled = value
         if not simulation_mode:
             set_heater_output(value)
+
+    @property
+    def state(self):
+        if self.heater_enabled:
+            return 'Heizung ein'
+        else:
+            return 'Heizung aus'
 
 
 if __name__ == '__main__':

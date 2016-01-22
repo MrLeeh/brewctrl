@@ -1,0 +1,153 @@
+
+{% extends 'base.html' %}
+
+{% from 'common.html' import modal %}
+
+{% block title %}Brewctrl - Temperaturverlauf{% endblock %}
+
+{% block main %}
+
+  <script src="/static/socket.io-1.3.7.js"></script>
+  <script src="/static/plotly.min.js"></script>
+
+  <script type="text/javascript" charset="utf-8">
+    // set nav element as active
+    document.getElementById('nav_steps').className="active"
+
+    $(document).ready(function(){
+      namespace = '/brewctrl';
+      var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+
+      socket.emit('connected', {"name": "steps.html"});
+
+      $(function() {
+        $(".step-delete-link").on("click", function() {
+          var delete_url = $(this).attr('data-delete-url');
+          $.ajax({
+            url: delete_url,
+            type: 'DELETE',
+            success: function(response) {
+              if (response.status == 'OK') {
+                window.location = '{{ url_for('handle_steps') }}';
+              } else {
+              alert('Delete failed.')
+            }
+          }
+          });
+          return false;
+        });
+      });
+
+      var graph = {{graphJSON | safe}};
+      Plotly.plot('graph', graph.data, graph.layout, graph.config);
+
+      // Handle sorting of steps
+      // Return a helper with preserved width of cells
+      var fixHelper = function(e, ui) {
+        ui.children().each(function() {
+          $(this).width($(this).width());
+        });
+        return ui;
+      };
+
+      var start_pos;
+      $("#sort tbody").sortable({helper: fixHelper}).disableSelection();
+
+      $("#sort tbody").sortable({
+        start: function(event, ui) {
+          start_pos = ui.item.index();
+        }
+      });
+
+      $("#sort tbody").sortable({
+        stop: function(event, ui) {
+          socket.emit('step_moved', {
+            'src': start_pos,
+            'dst': ui.item.index(),
+            'item': ui.item
+          });
+        }
+      });
+
+      $('#myModal').on('show.bs.modal', function (event) {
+
+        // get source button and step data
+        var button = $(event.relatedTarget)
+        var step_name = button.data('stepname')
+        var url = button.data('delete-url')
+        var modal = $(this);
+
+        // set modal message
+        modal.find('#myModalBody').text(
+          "Möchtest Du den Ablaufschritt \"" + step_name + "\" löschen?"
+        );
+
+        // set modal url for deleting
+        modal.find('#modalOk').attr("data-delete-url", url)
+      });
+
+      // draw graph
+      socket.on('steps', function(data) {
+        // plot current temp
+        graph.data[0].x = data.time;
+        graph.data[0].y = data.sp;
+
+        Plotly.redraw('graph');
+      });
+
+      //
+    });
+  </script>
+
+  <style>
+    .centering {
+        float: none;
+        margin: 0 auto;
+    }
+  </style>
+
+  <div class="row">
+    <div class="col-md-offset-3 col-md-6">
+      <table id="sort" class="table table-hover">
+        <thead>
+          <tr>
+            <th>Schritt</th>
+            <th align="center">Temperatur</th>
+            <th align="center">Timer</th>
+            <th></th>
+          </tr>
+        </thead>
+        <body>
+          {% for step in steps %}
+            <tr id="step-{{ step.id }}">
+              <td>{{ step.name }}</td>
+              <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
+              <td align="center">{{ "{} min".format(step.timer) }}</td>
+              <td>
+                <span class="dropdown">
+                  <button class="btn-xs btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                    <li><a href="{{ url_for('edit_step', step_id=step.id) }}">Bearbeiten</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#" class="delete-step" type="button" data-toggle="modal" data-target="#myModal" data-stepname="{{ step.name }}" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}" >Löschen</a></li>
+                  </ul>
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </body>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-offset-3 col-md-6">
+      <div id="graph">
+      </div>
+    </div>
+  </div>
+
+{{ modal() }}
+{% endblock %}
+

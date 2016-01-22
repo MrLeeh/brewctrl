@@ -51,7 +51,7 @@ class Sequence:
         self.running = False
         self.pause = False
 
-    def process(self, cur_time=datetime.now()):
+    def process(self, temp, cur_time=datetime.now()):
         if self.running:
             if not self.pause:
                 self.progress += cur_time - self._prev_time

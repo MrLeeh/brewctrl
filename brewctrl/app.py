@@ -7,9 +7,8 @@ licensed under the MIT license
 """
 
 import json
-import time
 from datetime import datetime
-from threading import Thread, Timer
+from threading import Timer
 
 import plotly
 from flask import Flask, render_template, request, url_for, redirect, abort, \
@@ -36,13 +35,13 @@ socketio = SocketIO(app)
 
 from .sequence import Sequence
 
+# Global Variables
+
 # temperature controller
 temp_ctrl = TempController()
 # sequence controller
 sequence = Sequence()
-state = "Heizung aus"
-recording = False
-url_rule = ''
+recording_enabled = False
 
 
 def create_steps_graph(steps):
@@ -84,25 +83,27 @@ def create_processdata_graph():
 
 
 def background_thread():
+    global url_rule, recording_enabled
+    global temp_data, sp_data
+
     # current values
     cur_time = datetime.now()
 
+    # restart timer
     t = Timer(REFRESH_TIME, background_thread)
     t.daemon = True
     t.start()
 
-    global url_rule, recording
-    global temp_data, sp_data
-
-    sequence.process(cur_time)
-    if sequence.running and not sequence.pause:
-        temp_ctrl.sp = sequence.cur_setpoint
+    # process temperature controller
     temp_ctrl.process()
 
-    # current state
-    state = "Heizung ein" if temp_ctrl.heater_on else "Heizung aus"
+    # process sequence controller
+    sequence.process(temp_ctrl.temp, cur_time)
+    if sequence.running and not sequence.pause:
+        temp_ctrl.sp = sequence.cur_setpoint
 
-    if recording:
+    # if enabled do data recording
+    if recording_enabled:
         data = ProcessData()
         data.timestamp = cur_time
         data.temp_setpoint = temp_ctrl.sp
@@ -110,32 +111,27 @@ def background_thread():
         db.session.add(data)
         db.session.commit()
 
-    socketio.emit(
-        'process_data',
-        {
-            'time': str(cur_time),
-            'temp': temp_ctrl.temp,
-            'temp_setpoint': temp_ctrl.sp,
-            'state': state,
-            'recording': recording,
-            'running': sequence.running,
-            'pause': sequence.pause,
-            'progress': format_td(sequence.progress),
-        },
-        namespace=NAMESPACE
-    )
+    process_data = {
+        'pause': sequence.pause,
+        'progress': format_td(sequence.progress),
+        'recording_enabled': recording_enabled,
+        'running': sequence.running,
+        'temp': temp_ctrl.temp,
+        'temp_setpoint': temp_ctrl.sp,
+        'time': str(cur_time),
+        'state': temp_ctrl.state,
+    }
+
+    if sequence.running:
+        process_data['step_id'] = sequence.cur_step.id
+
+    socketio.emit('process_data', process_data, namespace=NAMESPACE)
 
 
 # init background thread
 t = Timer(REFRESH_TIME, background_thread)
 t.daemon = True
 t.start()
-
-
-@app.before_request
-def before_request():
-    global url_rule
-    url_rule = str(request.url_rule)
 
 
 @app.route('/')
@@ -168,7 +164,8 @@ def index():
     )
     graph_json = json.dumps(graph, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template(
-        'index.html', steps=steps, graphJSON=graph_json, recording=recording
+        'index.html', steps=steps, graphJSON=graph_json,
+        recording_enabled=recording_enabled
     )
 
 
@@ -180,14 +177,50 @@ def handle_temp():
         temp_ctrl.sp = float(form.cur_sp.data)
 
     form.cur_sp.data = temp_ctrl.sp
-    form.cur_state.data = state
+    form.cur_state.data = temp_ctrl.state
 
     graphs = create_processdata_graph()
     ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
     graph_json = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template(
         'temp.html', form=form, ids=ids, graphJSON=graph_json,
-        recording=recording
+        recording_enabled=recording_enabled
+    )
+
+
+@app.route('/steps', methods=['GET'])
+def handle_steps():
+    steps = db.session.query(Step).order_by(Step.order).all()
+    x, y = create_steps_graph(steps)
+
+    graph = dict(
+        data=[
+            dict(x=x, y=y, mode='lines', name='Sollwert [°C]')
+        ],
+        layout=dict(
+            height=250,
+            margin=dict(
+                l=40,
+                r=40,
+                b=40,
+                t=40,
+                pad=0
+            ),
+            xaxis=dict(
+                title="Zeit [min]"
+            ),
+            yaxis=dict(
+                title='Temperatur [°C]'
+            ),
+            showlegend=False
+        ),
+        config=dict(
+            staticPlot=True
+        )
+    )
+    graph_json = json.dumps(graph, cls=plotly.utils.PlotlyJSONEncoder)
+    return render_template(
+        'steps.html', steps=steps, graphJSON=graph_json,
     )
 
 
@@ -202,7 +235,7 @@ def add_step():
         form.populate_obj(step)
         step.order = len(db.session.query(Step).all()) - 1
         db.session.commit()
-        return redirect(url_for('index'))
+        return redirect(url_for('handle_steps'))
 
     return render_template('edit.html', form=form)
 
@@ -218,7 +251,7 @@ def edit_step(step_id):
     if request.method == 'POST' and form.validate():
         form.populate_obj(step)
         db.session.commit()
-        return redirect(url_for('index'))
+        return redirect(url_for('handle_steps'))
 
     return render_template('edit.html', form=form)
 
@@ -231,6 +264,11 @@ def delete_step(step_id):
         response.status = 404
         return response
     db.session.delete(step)
+    db.session.commit()
+
+    steps = db.session.query(Step).order_by(Step.order).all()
+    for i, step in enumerate(steps):
+        step.order = i
     db.session.commit()
     return jsonify({'status': 'OK'})
 
@@ -269,6 +307,12 @@ def step_moved(data):
     )
 
 
+@socketio.on('connected', namespace=NAMESPACE)
+def connected(data):
+    name = str(data['name'])
+    print('IOSocket connection to {}'.format(name))
+
+
 @socketio.on('clear_data', namespace=NAMESPACE)
 def clear_data(data):
     db.session.query(ProcessData).delete()
@@ -277,14 +321,14 @@ def clear_data(data):
 
 @socketio.on('start_recording', namespace=NAMESPACE)
 def start_recording(data):
-    global recording
-    recording = True
+    global recording_enabled
+    recording_enabled = True
 
 
 @socketio.on('stop_recording', namespace=NAMESPACE)
 def stop_recording(data):
-    global recording
-    recording = False
+    global recording_enabled
+    recording_enabled = False
 
 
 @socketio.on('start_sequence', namespace=NAMESPACE)

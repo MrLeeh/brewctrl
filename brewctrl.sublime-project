@@ -3,6 +3,12 @@
 	[
 		{
 			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Run Testserver",
+			"selector": "source.python",
+			"shell_cmd": "/Users/stefan/Documents/python/venvs/brewctrl/bin/python -u \"$project_path/manage.py\" run",
+		},
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
 			"name": "Anaconda Python Builder",
 			"selector": "source.python",
 			"shell_cmd": "/Users/stefan/.pyenv/shims/python -u \"$file\""
@@ -13,5 +19,7 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"python_interpreter": "/Users/stefan/Documents/python/venvs/brewctrl/bin/python"
+
 }

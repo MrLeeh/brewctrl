@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% set title = 'Maischeverlauf' %}
-
 {% block title %}Brewctrl - Home{% endblock %}
 
 {% block main %}
@@ -20,37 +18,11 @@
 
       document.getElementById('nav_home').className="active"
 
-      // Handle sorting of steps
-      // Return a helper with preserved width of cells
-      var fixHelper = function(e, ui) {
-        ui.children().each(function() {
-          $(this).width($(this).width());
-        });
-        return ui;
-      };
-      var start_pos;
-      $("#sort tbody").sortable({
-        helper: fixHelper
-      }).disableSelection();
-
-      $("#sort tbody").sortable({
-        start: function(event, ui) {
-          start_pos = ui.item.index();
-        }
-      });
-
-      $("#sort tbody").sortable({
-        stop: function(event, ui) {
-          socket.emit('step_moved', {'src': start_pos, 'dst': ui.item.index(), 'item': ui.item});
-        }
-      });
-
       // draw graph
       socket.on('steps', function(data) {
         // plot current temp
         graph.data[0].x = data.time;
         graph.data[0].y = data.sp;
-
         Plotly.redraw('graph');
       });
 
@@ -62,7 +34,9 @@
         socket.emit("stop_sequence", {});
       });
 
+      // Get process data
       socket.on('process_data', function(data) {
+        // play, pause and stop
         if (!data.running || data.pause) {
           $("#start_sequence").children("span").removeClass("glyphicon-pause");
           $("#start_sequence").children("span").addClass("glyphicon-play");
@@ -71,7 +45,10 @@
           $("#start_sequence").children("span").removeClass("glyphicon-play");
           $("#start_sequence").children("span").addClass("glyphicon-pause");
         }
+
+        // setpoint
         $("#sequence_progress").text(data.progress + " " + data.temp_setpoint);
+
       });
 
     });
@@ -83,42 +60,6 @@
     }
   </style>
 
-  <legend> {{ title }} </legend>
-  <div class="row">
-    <div class="col-md-offset-3 col-md-6">
-      <table id="sort" class="table table-hover">
-        <thead>
-          <tr>
-            <th>Schritt</th>
-            <th align="center">Temperatur</th>
-            <th align="center">Timer</th>
-            <th><a href="{{ url_for('add_step') }}"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></th>
-          </tr>
-        </thead>
-        <body>
-          {% for step in steps %}
-            <tr>
-              <td>{{ step.name }}</td>
-              <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
-              <td align="center">{{ "{} min".format(step.timer) }}</td>
-              <td>
-                <span class="dropdown">
-                  <button class="btn-xs btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                    <li><a href="{{ url_for('edit_step', step_id=step.id) }}">Bearbeiten</a></li>
-                    <li role="separator" class="divider"></li>
-                    <li><a class="step-delete-link" href="#" data-delete-url="{{ url_for('delete_step', step_id=step.id) }}">Löschen</a></li>
-                  </ul>
-                </span>
-              </td>
-            </tr>
-          {% endfor %}
-        </body>
-      </table>
-    </div>
-  </div>
   <div class="row">
     <div class="col-md-offset-3 col-md-6 well well-md">
       <div class="block center">

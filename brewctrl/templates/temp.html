@@ -27,10 +27,11 @@
           }
 
         socket.on('process_data', function(data) {
+          console.log(data);
           $('#{{ form.cur_temp.name }}').val(data.temp.toFixed(1));
           $('#{{ form.cur_state.name }}').val(data.state);
 
-          if (data.recording) {
+          if (data.recording_enabled) {
             // plot current temp
             graphs[0].data[0].x.push(data.time);
             graphs[0].data[0].y.push(data.temp);
