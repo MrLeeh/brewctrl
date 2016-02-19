@@ -1,0 +1,27 @@
+{% macro navbar() %}
+<ul class="nav navbar-nav">
+  <li id="nav_home"><a href="{{ url_for('index') }}">Home</a></li>
+  {#
+  <li class="dropdown">
+    <a id="nav_steps" href="{{ url_for('handle_steps') }}" class="dropdown-toggle" data-toggle="dropdown" role="button">Ablauf<span class="caret"></a>
+    <ul class="dropdown-menu">
+      <li><a href="{{ url_for('handle_steps') }}">Übersicht</a></li>
+      <li role="separator" class="divider"></li>
+      <li><a href="{{ url_for('add_step') }}">Schritt hinzufügen</a></li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a id="nav_temp" href="{{ url_for('handle_temp') }}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Temperaturverlauf<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li><a href="{{ url_for('handle_temp') }}">Diagramm</a></li>
+      <li role="separator" class="divider"></li>
+      <li id="start_recording"{% if recording_enabled %b} class="disabled"{% endif %}><a href="#">Aufzeichnung starten</a></li>
+      <li id="stop_recording"{% if not recording_enabled %} class="disabled"{% endif %}><a href="#">Aufzeichnung stoppen</a></li>
+      <li role="separator" class="divider"></li>
+      <li><a id="clear_data" href="#" data-toggle="modal" data-target="#mdlDeleteTemp" >Aufzeichnung löschen</a></li>
+    </ul>
+  </li>
+  #}
+  <li id="nav-tempctrl"><a href="{{ url_for('tempctrl') }}">Temperaturregelung</a></li>
+</ul>
+{% endmacro %}

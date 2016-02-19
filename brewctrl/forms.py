@@ -6,14 +6,16 @@ licensed under the MIT license
 
 """
 
-from wtforms import Form, DecimalField, IntegerField, TextField, TextAreaField
+from flask_wtf import Form
+from wtforms import DecimalField, IntegerField, TextField, TextAreaField
 from wtforms.validators import required, Length, NumberRange
 
 
 class TempForm(Form):
-    cur_temp = DecimalField("Temperatur:", places=1)
-    cur_sp = DecimalField("Sollwert:", places=1)
-    cur_state = TextField("Status:")
+    setpoint = DecimalField("Sollwert:", places=1)
+    temp = DecimalField("Istwert:", places=1)
+    power = DecimalField("Leistung:", places=0)
+    state = TextField("Status:")
 
 
 class EditForm(Form):

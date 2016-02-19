@@ -7,7 +7,7 @@
 
   <!-- Latest compiled and minified CSS -->
   <!-- <link rel="stylesheet" href="http://bootswatch.com/united/bootstrap.css"> -->
-  <link rel="stylesheet" href="http://bootswatch.com/spacelab/bootstrap.css">
+  <link rel="stylesheet" href="http://bootswatch.com/united/bootstrap.css">
   <script src="/static/jquery-1.11.3.min.js"></script>
   <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
   <script src="/static/jquery-migrate-1.2.1.min.js"></script>
@@ -74,53 +74,17 @@
           <a class="navbar-brand" href="{{ url_for('index') }}">Brewctrl</a>
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-          <ul class="nav navbar-nav">
-            <li id="nav_home"><a href="{{ url_for('index') }}">Home</a></li>
-            <li class="dropdown">
-              <a id="nav_steps" href="{{ url_for('handle_steps') }}" class="dropdown-toggle" data-toggle="dropdown" role="button">Ablauf<span class="caret"></a>
-              <ul class="dropdown-menu">
-                <li><a href="{{ url_for('handle_steps') }}">Übersicht</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="{{ url_for('add_step') }}">Schritt hinzufügen</a></li>
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a id="nav_temp" href="{{ url_for('handle_temp') }}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Temperaturverlauf<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="{{ url_for('handle_temp') }}">Diagramm</a></li>
-                <li role="separator" class="divider"></li>
-                <li id="start_recording"{% if recording_enabled %} class="disabled"{% endif %}><a href="#">Aufzeichnung starten</a></li>
-                <li id="stop_recording"{% if not recording_enabled %} class="disabled"{% endif %}><a href="#">Aufzeichnung stoppen</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a id="clear_data" href="#" data-toggle="modal" data-target="#mdlDeleteTemp" >Aufzeichnung löschen</a></li>
-              </ul>
-            </li>
-          </ul>
+        {% block navbar %}
+        {% endblock navbar %}
         </div>
       </div>
     </nav>
   </div>
   <div class="content container-fluid">
-    <!-- modal dialog for deleting current data  -->
-    <div class="modal fade" id="mdlDeleteTemp" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="mdlDeleteTempLabel">Temperaturprofil löschen</h4>
-          </div>
-          <div class="modal-body" id="mdlDeleteTempBody">
-            Soll das aktuelle Temperaturprofil gelöscht werden?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
-            <a id="mdlDeleteTempOk" type="button" class="btn btn-primary" href="#" data-dismiss="modal">Ok</a>
-          </div>
-        </div>
-      </div>
-    </div>
+
     <!-- Main Block -->
-    {% block main %}{% endblock main %}
+    {% block main %}
+    {% endblock main %}
 
   </div>
 </body>

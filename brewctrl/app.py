@@ -186,6 +186,12 @@ def handle_temp():
     )
 
 
+@app.route('/tempctrl', methods=['GET', 'POST'])
+def tempctrl():
+    form = TempForm()
+    return render_template('tempctrl/tempctrl.html', form=form)
+
+
 @app.route('/steps', methods=['GET'])
 def handle_steps():
     steps = db.session.query(Step).order_by(Step.order).all()
