@@ -17,7 +17,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
 from .config import REFRESH_TIME, NAMESPACE
-from .control import TempController
+from .control import TempController, MODE_MANUAL, MODE_AUTO
 from .forms import TempForm, EditForm
 from .models import Base, Step, ProcessData
 from .util import format_td
@@ -39,6 +39,7 @@ from .sequence import Sequence
 
 # temperature controller
 temp_ctrl = TempController()
+
 # sequence controller
 sequence = Sequence()
 recording_enabled = False
@@ -98,13 +99,13 @@ def background_thread():
     # process sequence controller
     sequence.process(temp_ctrl.temp, cur_time)
     if sequence.running and not sequence.pause:
-        temp_ctrl.sp = sequence.cur_setpoint
+        temp_ctrl.setpoint = sequence.cur_setpoint
 
     # if enabled do data recording
     if recording_enabled:
         data = ProcessData()
         data.timestamp = cur_time
-        data.temp_setpoint = temp_ctrl.sp
+        data.temp_setpoint = temp_ctrl.setpoint
         data.temp = temp_ctrl.temp
         db.session.add(data)
         db.session.commit()
@@ -115,9 +116,10 @@ def background_thread():
         'recording_enabled': recording_enabled,
         'running': sequence.running,
         'temp': temp_ctrl.temp,
-        'temp_setpoint': temp_ctrl.sp,
+        'temp_setpoint': temp_ctrl.setpoint,
         'time': str(cur_time),
         'state': temp_ctrl.state,
+        'power': temp_ctrl.power
     }
 
     if sequence.running:
@@ -172,9 +174,9 @@ def handle_temp():
     form = TempForm(request.form)
 
     if request.method == 'POST' and form.validate():
-        temp_ctrl.sp = float(form.cur_sp.data)
+        temp_ctrl.setpoint = float(form.cur_sp.data)
 
-    form.cur_sp.data = temp_ctrl.sp
+    form.cur_sp.data = temp_ctrl.setpoint
     form.cur_state.data = temp_ctrl.state
 
     graphs = create_processdata_graph()
@@ -188,7 +190,26 @@ def handle_temp():
 
 @app.route('/tempctrl', methods=['GET', 'POST'])
 def tempctrl():
-    form = TempForm()
+    form = TempForm(request.form, obj=temp_ctrl)
+
+    if form.validate_on_submit():
+        # setpoint
+        temp_ctrl.setpoint = float(form.setpoint.data)
+        # mode
+        mode = form.mode.data
+        temp_ctrl.mode = mode
+        # power
+        if mode == MODE_MANUAL:
+            temp_ctrl.power = float(form.power.data)
+
+        # controller settings
+        temp_ctrl.kp = float(form.kp.data)
+        temp_ctrl.tn = float(form.tn.data)
+        temp_ctrl.duty_cycle = float(form.duty_cycle.data)
+
+        return redirect(url_for('tempctrl'))
+
+    form.setpoint.data = temp_ctrl.setpoint
     return render_template('tempctrl/tempctrl.html', form=form)
 
 

@@ -11,7 +11,7 @@
   <script src="/static/jquery-1.11.3.min.js"></script>
   <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
   <script src="/static/jquery-migrate-1.2.1.min.js"></script>
-
+  <script src="/static/socket.io-1.3.7.js"></script>
   <!-- Latest compiled and minified JavaScript -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
   {# Link any other .css or .js found in app static folder. #}
@@ -31,34 +31,12 @@
     }
   </style>
 
-  <script>
-    $(document).ready(function(){
-      namespace = '/brewctrl'; // change to an empty string to use the global namespace
+  {% block style %}
+  {% endblock %}
 
-      // the socket.io documentation recommends sending an explicit package upon connection
-      // this is specially important when using the global namespace
-      var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+  {% block script %}
+  {% endblock %}
 
-      $("#start_recording").click(function() {
-        socket.emit('start_recording', {});
-        $("#start_recording").addClass("disabled");
-        $("#stop_recording").removeClass("disabled");
-      });
-
-      $("#stop_recording").click(function() {
-        socket.emit('stop_recording', {});
-        $("#start_recording").removeClass("disabled");
-        $("#stop_recording").addClass("disabled");
-      });
-
-      $("#mdlDeleteTempOk").on("click", function() {
-        console.log("delete");
-        socket.emit('clear_data', {});
-        window.location = "{{ url_for('handle_temp') }}";
-      });
-    });
-  </script>
-  {% block extra_head %}{% endblock extra_head %}
 </head>
 <body>
   <div id="main">

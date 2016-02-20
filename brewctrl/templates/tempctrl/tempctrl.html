@@ -1,18 +1,53 @@
 {% extends 'base.html' %}
 {% from 'navbar.html' import navbar %}
 
-<style>
+{% block style %}
+  <style>
+    div.suffix {
+      width: 60px;
+    }
 
-  div.suffix {
-    width: 60px;
-  }
+    input {
+      text-align: right;
+    }
+  </style>
+{% endblock %}
 
-</style>
+{% block script %}
+  <script>
+
+    var refresh_field_states = function(mode) {
+      $('#{{ form.power.name }}').prop('readonly', mode == 'auto');
+      $('#{{ form.setpoint.name }}').prop('readonly', mode == 'manual');
+    };
+
+    $(document).ready(function() {
+      $('#nav-tempctrl').addClass('active')
+      refresh_field_states($('#{{ form.mode.name }}').val());
+
+      // Socket data
+      var namespace = '/brewctrl'
+      var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+      socket.on('process_data', function(data) {
+        $('#{{ form.temp.name }}').val(data.temp.toFixed(1));
+        if ($('#{{ form.mode.name }}').val() == 'auto') {
+          $('#{{ form.power.name }}').val(data.power.toFixed(0));
+        };
+      });
+
+      // change mode
+      $('#{{ form.mode.name }}').change(function() {
+        refresh_field_states($(this).val());
+      });
+
+    });
+  </script>
+{% endblock %}
 
 {% macro decimal_field(field, suffix=None, readonly=False, submit_btn=False) %}
   <div class="form-group {% if field.errors %} error{% endif %}">
-    {{ field.label(class="control-label col-sm-2") }}
-    <div class="input-group col-sm-4">
+    {{ field.label(class="control-label col-sm-offset-1 col-sm-4") }}
+    <div class="input-group col-sm-6">
       {{ field(class="form-control", readonly=readonly, **kwargs) }}
       {% if suffix %}
         <div class="input-group-addon suffix">{{ suffix }}</div>
@@ -22,7 +57,6 @@
     {% for error in field.errors %}
      <span class="help-inline">{{ error }}</span>
     {% endfor %}
-
   </div>
 {% endmacro %}
 
@@ -31,27 +65,68 @@
 {% endblock %}
 
 {% block main %}
+<legend>Temperaturregelung</legend>
+<form method="post">
   {{ form.hidden_tag() }}
-
-  <div class="col-sm-offset-2 col-sm-8">
-    <div class="panel panel-primary">
-      <div class="panel-heading">
-        <h4 class="panel-title">
-          <a data-toggle="collapse" href="#collapse-status">
-            Status
-          </a>
-        </h4>
+  <div class="row">
+    <div class="col-sm-offset-2 col-sm-8">
+      <div class="panel panel-primary">
+        <div class="panel-heading" data-toggle="collapse" data-target="#collapse-status">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" href="#collapse-status">
+              Status
+            </a>
+          </h4>
+        </div>
+        <div id="collapse-status" class="panel-collapse collapse in">
+          <div class="panel-body" id="panel-status">
+            <div class="form-horizontal col-sm-6">
+              {{ decimal_field(form.setpoint, '°C') }}
+              {{ decimal_field(form.temp, '°C', readonly=True) }}
+              {{ decimal_field(form.power, '%', readonly=True) }}
+            </div>
+            <div class="form-horizontal col-sm-6">
+              <div class="form-group">
+                {{ form.mode.label(class="control-label col-sm-offset-1 col-sm-4") }}
+                <div class="col-sm-6">
+                  {{ form.mode(class="form-control") }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="collapse-status" class="panel-collapse collapse in">
-        <div class="panel-body" id="panel-status">
-          <div class="form-horizontal">
-            {{ decimal_field(form.setpoint, '°C') }}
-            {{ decimal_field(form.temp, '°C', readonly=True) }}
-            {{ decimal_field(form.power, '%', readonly=True) }}
+    </div>
+
+    <div class="col-sm-offset-2 col-sm-8">
+      <div class="panel panel-primary">
+        <div class="panel-heading" data-toggle="collapse" data-target="#collapse-settings">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" href="#collapse-settings">
+              Einstellungen
+            </a>
+          </h4>
+        </div>
+        <div id="collapse-settings" class="panel-collapse collapse out">
+          <div class="panel-body" id="panel-settings">
+            <div class="form-horizontal col-sm-6">
+              {{ decimal_field(form.kp, '-') }}
+              {{ decimal_field(form.tn, 's') }}
+            </div>
+            <div class="form-horizontal col-sm-6">
+              {{ decimal_field(form.duty_cycle, 's') }}
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="row">
+    <div class="col-sm-offset-2 col-sm-10">
+      <button class="btn btn-default">Speichern</button> oder <a href="{{ url_for('index') }}">Zurück</a>
+    </div>
+  </div>
+</form>
 
 {% endblock %}
