@@ -141,8 +141,9 @@ class TempController:
             if self.reset:
                 self._i = 0
             else:
-                self._i += self._time_delta * self._temp_delta / self.tn
-                self._i = max(min(self._i, MAX), MIN)
+                if not self.tn == 0:
+                    self._i += self._time_delta * self._temp_delta / self.tn
+                    self._i = max(min(self._i, MAX), MIN)
 
             # output
             self.power = self._p + self._i

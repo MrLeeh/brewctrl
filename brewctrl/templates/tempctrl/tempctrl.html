@@ -17,14 +17,21 @@
   <script>
 
     var refresh_field_states = function(mode) {
-      $manual_power = $('{{ form.manual_power.name');
-      $power = $('field-power');
+      $manual_power = $('.manual_power');
+      $power = $('.field-power');
 
       $('#{{ form.setpoint.name }}').prop('readonly', mode == 'manual');
+
       if (mode == 'manual') {
-        $
+        $manual_power.show();
+        $power.hide();
+      }
+      else {
+        $manual_power.hide();
+        $power.show();
       }
     };
+
 
     $(document).ready(function() {
       $('#nav-tempctrl').addClass('active')
@@ -62,12 +69,12 @@
   </script>
 {% endblock %}
 
-{% macro decimal_field(field, suffix=None, readonly=False) %}
-  <div class="form-group {% if field.errors %} error{% endif %}">
-    {{ field.label(class="control-label col-sm-offset-1 col-sm-4") }}
-    <div class="col-sm-6">
+{% macro decimal_field(field, suffix=None, class=None) %}
+  <div class="form-group {% if field.errors %} error{% endif %} {{ field.name }}">
+    {{ field.label(class="control-label col-md-offset-1 col-md-4") }}
+    <div class="col-md-6">
       <div class="input-group">
-        {{ field(class="form-control", readonly=readonly, **kwargs) }}
+        {{ field(class="form-control", **kwargs) }}
         {% if suffix %}
           <div class="input-group-addon suffix">{{ suffix }}</div>
         {% endif %}
@@ -82,11 +89,11 @@
 
 
 {% macro disp_decimal_field(id, label, suffix=None) %}
-  <div class="form-group">
-    <label class="control-label col-sm-offset-1 col-sm-4">{{ label }}</label>
-    <div class="col-sm-6">
+  <div class="form-group {{ id }}">
+    <label class="control-label col-md-offset-1 col-md-4">{{ label }}</label>
+    <div class="col-md-6">
       <div class="input-group">
-        <input id="{{ id }}" class="form-control" type="decimal"/>
+        <input id="{{ id }}" class="form-control" readonly type="decimal"/>
         {% if suffix %}
           <div class="input-group-addon suffix">{{ suffix }}</div>
         {% endif %}
@@ -104,7 +111,7 @@
 <form method="post">
   {{ form.hidden_tag() }}
   <div class="row">
-    <div class="col-sm-offset-1 col-sm-8">
+    <div class="col-md-offset-1 col-md-8">
       <div class="panel panel-primary">
         <div class="panel-heading" data-toggle="collapse" data-target="#collapse-status">
           <h4 class="panel-title">
@@ -115,23 +122,23 @@
         </div>
         <div id="collapse-status" class="panel-collapse collapse in">
           <div class="panel-body" id="panel-status">
-            <div class="form-horizontal col-sm-6">
+            <div class="form-horizontal col-md-6">
               {{ decimal_field(form.setpoint, '°C') }}
               {{ disp_decimal_field('field-temp', 'Temperatur:', '°C') }}
               {{ disp_decimal_field('field-power', 'Leistung:', '%') }}
-              {{ decimal_field(form.manual_power, '%', readonly=True) }}
+              {{ decimal_field(form.manual_power, '%') }}
             </div>
-            <div class="form-horizontal col-sm-6">
+            <div class="form-horizontal col-md-6">
               <div class="form-group">
-                {{ form.mode.label(class="control-label col-sm-offset-1 col-sm-4") }}
-                <div class="col-sm-6">
+                {{ form.mode.label(class="control-label col-md-offset-1 col-md-4") }}
+                <div class="col-md-6">
                   {{ form.mode(class="form-control") }}
                 </div>
               </div>
               <div class="form-group">
-                <label class="control-label col-sm-offset-1 col-sm-4">Heizung</label>
-                <div class="col-sm-6">
-                  <span id="output-button" class="btn btn-success col-sm-12">Ein</span>
+                <label class="control-label col-md-offset-1 col-md-4">Heizung</label>
+                <div class="col-md-6">
+                  <span id="output-button" class="btn btn-success col-md-12">Ein</span>
                 </div>
               </div>
             </div>
@@ -140,7 +147,7 @@
       </div>
     </div>
 
-    <div class="col-sm-offset-1 col-sm-8">
+    <div class="col-md-offset-1 col-md-8">
       <div class="panel panel-primary">
         <div class="panel-heading" data-toggle="collapse" data-target="#collapse-settings">
           <h4 class="panel-title">
@@ -151,11 +158,11 @@
         </div>
         <div id="collapse-settings" class="panel-collapse collapse in">
           <div class="panel-body" id="panel-settings">
-            <div class="form-horizontal col-sm-6">
+            <div class="form-horizontal col-md-6">
               {{ decimal_field(form.kp, '-') }}
               {{ decimal_field(form.tn, 's') }}
             </div>
-            <div class="form-horizontal col-sm-6">
+            <div class="form-horizontal col-md-6">
               {{ decimal_field(form.duty_cycle, 's') }}
             </div>
           </div>
@@ -165,7 +172,7 @@
   </div>
 
   <div class="row">
-    <div class="col-sm-offset-1 col-sm-10">
+    <div class="col-md-offset-1 col-md-10">
       <button class="btn btn-default">Speichern</button> oder <a href="{{ url_for('index') }}">Zurück</a>
     </div>
   </div>
