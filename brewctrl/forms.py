@@ -14,9 +14,7 @@ from wtforms.validators import required, Length, NumberRange
 
 class TempForm(Form):
     setpoint = DecimalField("Sollwert:", places=1)
-    temp = DecimalField("Istwert:", places=1)
-    power = DecimalField("Leistung:", places=0)
-    state = TextField("Status:")
+    manual_power = DecimalField("Leistung:", places=0)
     mode = SelectField("Modus:", choices=[
         ('manual', 'Steuerung'), ('auto', 'Regelung')])
     kp = DecimalField("KP:", places=1)

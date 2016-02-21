@@ -9,7 +9,6 @@ from sqlalchemy import Boolean, Column
 from sqlalchemy import DateTime, Integer, String, Text, Float, Date
 from sqlalchemy.ext.declarative import declarative_base
 
-
 Base = declarative_base()
 
 
@@ -33,6 +32,17 @@ class Step(Base):
     def __repr__(self):
         return '<{self.__class__.__name__}: {self.id}{self.name}>'.format(
             self=self)
+
+
+class TempCtrl(Base):
+    __tablename__ = 'tempctrl'
+    id = Column(Integer, primary_key=True)
+    setpoint = Column(Float, default=50.0)
+    kp = Column(Float, default=10.0)
+    tn = Column(Float, default=180.0)
+    mode = Column(String(80), default='auto')
+    duty_cycle = Column(Float, default=60.0)
+    manual_power = Column(Float, default=50.0)
 
 
 class ProcessData(Base):

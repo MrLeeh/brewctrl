@@ -18,4 +18,4 @@ SECRET_KEY = 'my secret key'
 NAMESPACE = '/brewctrl'
 
 # update time in seconds
-REFRESH_TIME = 1
+REFRESH_TIME = 1.0
