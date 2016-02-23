@@ -160,6 +160,7 @@ class TempController:
             self.power = 0.0
             self.output = False
 
+        self.heater_enabled = self.output
         self._prev_time = cur_time
 
     def load_settings(self):
