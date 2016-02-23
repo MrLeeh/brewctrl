@@ -34,17 +34,26 @@
 
 
     $(document).ready(function() {
-      $('#nav-tempctrl').addClass('active')
+      // $('#nav-tempctrl').addClass('active')
       refresh_field_states($('#{{ form.mode.name }}').val());
 
       // Socket data
       var namespace = '/brewctrl'
       var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+
       socket.on('process_data', function(data) {
         // current temperature
         $('#field-temp').val(data.temp.toFixed(1));
         // current power
         $('#field-power').val(data.power.toFixed(0));
+
+        if (data.active) {
+          $('#output-button').text('Aktiv');
+        }
+        else {
+          $('#output-button').text('Inaktiv');
+        }
+
         // current output state
         var $output_btn = $('#output-button');
         if (data.output) {
@@ -101,7 +110,7 @@
 {% endmacro %}
 
 {% block navbar %}
-  {{ navbar() }}
+  {{ navbar(processdata.active) }}
 {% endblock %}
 
 {% block main %}

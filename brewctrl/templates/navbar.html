@@ -1,5 +1,26 @@
-{% macro navbar() %}
-<ul class="nav navbar-nav">
+{% macro navbar(tempctrl_active) %}
+
+<script>
+
+  $(document).ready(function() {
+    if ("{{ tempctrl_active }}" == "True") {
+      $('#nav-btn-tempctrl-active').addClass('btn-success');
+    }
+
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    $('#nav-btn-tempctrl-active').click(function() {
+      $(this).toggleClass('btn-success');
+
+      var active = $(this).hasClass('btn-success');
+      socket.emit('enable_tempctrl', {'data': active});
+    });
+
+  });
+
+</script>
+
+<ul class="nav navbar-nav navbar-left">
   <li id="nav_home"><a href="{{ url_for('index') }}">Home</a></li>
   {#
   <li class="dropdown">
@@ -22,6 +43,17 @@
     </ul>
   </li>
   #}
-  <li id="nav-tempctrl"><a href="{{ url_for('tempctrl_settings') }}">Temperaturregelung</a></li>
+
+  <li class="drowdown">
+    <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Einstellungen<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li id="nav-tempctrl"><a href="{{ url_for('tempctrl_settings') }}">Temperaturregelung</a></li>
+    </ul>
+  </li>
 </ul>
+
+<ul class="nav navbar-nav navbar-right">
+  <li><button id="nav-btn-tempctrl-active" class="btn navbar-btn">Temperaturregler</button></li>
+</ul>
+
 {% endmacro %}

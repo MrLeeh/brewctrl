@@ -128,33 +128,38 @@ class TempController:
         else:
             self._time_delta = 0
 
-        # get current temperature
-        self._temp = read_temp()
+        if self.active:
+            # get current temperature
+            self._temp = read_temp()
 
-        if self.mode == MODE_AUTO:
-            self._temp_delta = self.setpoint - self._temp
+            if self.mode == MODE_AUTO:
+                self._temp_delta = self.setpoint - self._temp
 
-            # proportional part
-            self._p = self.kp * self._temp_delta
+                # proportional part
+                self._p = self.kp * self._temp_delta
 
-            # integral part
-            if self.reset:
-                self._i = 0
+                # integral part
+                if self.reset:
+                    self._i = 0
+                else:
+                    if not self.tn == 0:
+                        self._i += self._time_delta * self._temp_delta / self.tn
+                        self._i = max(min(self._i, MAX), MIN)
+
+                # output
+                self.power = self._p + self._i
+
             else:
-                if not self.tn == 0:
-                    self._i += self._time_delta * self._temp_delta / self.tn
-                    self._i = max(min(self._i, MAX), MIN)
+                self.power = self.manual_power
 
-            # output
-            self.power = self._p + self._i
+            self.power = max(min(self.power, MAX), MIN)
 
+            # pwm duty duty_cycle
+            self.output = self.pwm.process(self.power)
         else:
-            self.power = self.manual_power
+            self.power = 0.0
+            self.output = False
 
-        self.power = max(min(self.power, MAX), MIN)
-
-        # pwm duty duty_cycle
-        self.output = self.pwm.process(self.power)
         self._prev_time = cur_time
 
     def load_settings(self):

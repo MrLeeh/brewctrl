@@ -7,6 +7,7 @@ licensed under the MIT license
 """
 from datetime import datetime
 from threading import Timer
+import json
 
 from flask import Flask, render_template, request, url_for, redirect
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -38,24 +39,33 @@ sequence = Sequence()
 recording_enabled = False
 
 # temperature controller
-from .control import TempController, MODE_MANUAL
-session = db.session
-tempctrl_settings = session.query(TempCtrlSettings).first()
+from .control import TempController
+
+tempctrl_settings = db.session.query(TempCtrlSettings).first()
 if tempctrl_settings is None:
     tempctrl_settings = TempCtrlSettings()
-    session.add(tempctrl_settings)
-    session.commit()
+    db.session.add(tempctrl_settings)
+    db.session.commit()
 
 tempctrl = TempController()
 tempctrl.load_settings()
 
 
+def get_processdata():
+    return {
+        'temp': tempctrl.temp,
+        'temp_setpoint': tempctrl.setpoint,
+        'time': str(datetime.now()),
+        'state': tempctrl.state,
+        'active': tempctrl.active,
+        'power': tempctrl.power,
+        'output': tempctrl.output
+    }
+
+
 def background_thread():
     global url_rule, recording_enabled
     global temp_data, sp_data
-
-    # current values
-    cur_time = datetime.now()
 
     # restart timer
     t = Timer(REFRESH_TIME, background_thread)
@@ -79,18 +89,7 @@ def background_thread():
     #     db.session.add(data)
     #     db.session.commit()
 
-    process_data = {
-        'pause': sequence.pause,
-        'progress': format_td(sequence.progress),
-        'recording_enabled': recording_enabled,
-        'running': sequence.running,
-        'temp': tempctrl.temp,
-        'temp_setpoint': tempctrl.setpoint,
-        'time': str(cur_time),
-        'state': tempctrl.state,
-        'power': tempctrl.power,
-        'output': tempctrl.output
-    }
+    process_data = get_processdata()
 
     # if sequence.running:
     #     process_data['step_id'] = sequence.cur_step.id
@@ -107,7 +106,7 @@ t.start()
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('base.html')
+    return render_template('index.html', processdata=get_processdata())
 
 
 @app.route('/tempctrl-settings', methods=['GET', 'POST'])
@@ -117,9 +116,16 @@ def tempctrl_settings():
 
     if form.validate_on_submit():
         form.populate_obj(tempctrl_settings)
-        session.commit()
+        db.session.commit()
 
         tempctrl.load_settings()
         return redirect(url_for('tempctrl_settings'))
 
-    return render_template('tempctrl/tempctrl.html', form=form)
+    return render_template('tempctrl/tempctrl.html', form=form,
+                           processdata=get_processdata())
+
+
+@socketio.on('enable_tempctrl')
+def handle_json(json):
+    enable = json['data']
+    tempctrl.active = enable
