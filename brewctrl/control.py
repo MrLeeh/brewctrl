@@ -93,7 +93,7 @@ class PWM_DC:
             dt = 0
 
         on_time = self.in_pct / 100.0 * self.duty_cycle
-        self.out = dt <= on_time
+        self.out = False if in_pct == 0 else dt <= on_time
         return self.out
 
 
@@ -125,12 +125,14 @@ class TempController:
 
         if self._prev_time is not None:
             self._time_delta = (cur_time - self._prev_time).total_seconds()
+            print(self._time_delta)
         else:
             self._time_delta = 0
 
+        # get current temperature
+        self._temp = read_temp()
+
         if self.active:
-            # get current temperature
-            self._temp = read_temp()
 
             if self.mode == MODE_AUTO:
                 self._temp_delta = self.setpoint - self._temp
