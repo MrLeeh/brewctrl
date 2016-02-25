@@ -125,7 +125,6 @@ class TempController:
 
         if self._prev_time is not None:
             self._time_delta = (cur_time - self._prev_time).total_seconds()
-            print(self._time_delta)
         else:
             self._time_delta = 0
 
@@ -143,6 +142,7 @@ class TempController:
                 # integral part
                 if self.reset:
                     self._i = 0
+                    self.reset = False
                 else:
                     if not self.tn == 0:
                         self._i += self._time_delta * self._temp_delta / self.tn

@@ -32,16 +32,7 @@
       }
     };
 
-
-    $(document).ready(function() {
-      // $('#nav-tempctrl').addClass('active')
-      refresh_field_states($('#{{ form.mode.name }}').val());
-
-      // Socket data
-      var namespace = '/brewctrl'
-      var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
-
-      socket.on('process_data', function(data) {
+    var display_processdata = function(data) {
         // current temperature
         $('#field-temp').val(data.temp.toFixed(1));
         // current power
@@ -64,12 +55,30 @@
           $output_btn.addClass('btn-default');
           $output_btn.removeClass('btn-success');
         }
+    };
 
+    $(document).ready(function() {
+
+      refresh_field_states($('#{{ form.mode.name }}').val());
+      display_processdata({{ processdata|tojson }})
+
+      // Socket data
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+      socket.on('process_data', function(data) {
+        display_processdata(data);
       });
 
       // change mode
       $('#{{ form.mode.name }}').change(function() {
         refresh_field_states($(this).val());
+      });
+
+      // reset button
+      $('#reset').click(function(event) {
+        event.preventDefault();
+        console.log('click');
+        socket.emit('reset_tempctrl');
       });
 
     });

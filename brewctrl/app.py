@@ -9,11 +9,12 @@ from datetime import datetime
 from threading import Timer
 import json
 
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
+from flask_debugtoolbar import DebugToolbarExtension
 from flask_socketio import SocketIO
 
-from .config import REFRESH_TIME, NAMESPACE
+from .config import REFRESH_TIME
 from .forms import TempForm
 from .models import Base
 from .models import TempCtrl as TempCtrlSettings
@@ -29,6 +30,7 @@ app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
 db.Model = Base
 socketio = SocketIO(app)
+# toolbar = DebugToolbarExtension(app)
 
 from .sequence import Sequence
 
@@ -94,7 +96,7 @@ def background_thread():
     # if sequence.running:
     #     process_data['step_id'] = sequence.cur_step.id
 
-    socketio.emit('process_data', process_data, namespace=NAMESPACE)
+    socketio.emit('process_data', process_data)
 
 
 # init background thread
@@ -129,3 +131,8 @@ def tempctrl_settings():
 def handle_json(json):
     enable = json['data']
     tempctrl.active = enable
+
+
+@socketio.on('reset_tempctrl')
+def handle_reset_tempctrl():
+    tempctrl.reset = True

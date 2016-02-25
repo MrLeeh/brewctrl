@@ -15,7 +15,6 @@ SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 DEBUG = True
 SECRET_KEY = 'my secret key'
-NAMESPACE = '/brewctrl'
 
 # update time in seconds
 REFRESH_TIME = 1.0
