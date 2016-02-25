@@ -7,18 +7,15 @@ licensed under the MIT license
 """
 from datetime import datetime
 from threading import Timer
-import json
 
-from flask import Flask, render_template, request, url_for, redirect, jsonify
+from flask import Flask, render_template, request, url_for, redirect
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask_debugtoolbar import DebugToolbarExtension
 from flask_socketio import SocketIO
 
 from .config import REFRESH_TIME
 from .forms import TempForm
 from .models import Base
 from .models import TempCtrl as TempCtrlSettings
-from .util import format_td
 
 # monkey patching for usage of background threads
 import eventlet
@@ -30,20 +27,12 @@ app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
 db.Model = Base
 socketio = SocketIO(app)
-# toolbar = DebugToolbarExtension(app)
 
-from .sequence import Sequence
-
-# Global Variables
-
-# sequence controller
-sequence = Sequence()
-recording_enabled = False
 
 # temperature controller
 from .control import TempController
-
 tempctrl_settings = db.session.query(TempCtrlSettings).first()
+
 if tempctrl_settings is None:
     tempctrl_settings = TempCtrlSettings()
     db.session.add(tempctrl_settings)
@@ -51,6 +40,10 @@ if tempctrl_settings is None:
 
 tempctrl = TempController()
 tempctrl.load_settings()
+data = dict(
+    time=[],
+    temp=[]
+)
 
 
 def get_processdata():
@@ -66,9 +59,6 @@ def get_processdata():
 
 
 def background_thread():
-    global url_rule, recording_enabled
-    global temp_data, sp_data
-
     # restart timer
     t = Timer(REFRESH_TIME, background_thread)
     t.daemon = True
@@ -76,27 +66,11 @@ def background_thread():
 
     # process temperature controller
     tempctrl.process()
+    processdata = get_processdata()
+    data['time'].append(processdata['time'])
+    data['temp'].append(processdata['temp'])
 
-    # # process sequence controller
-    # sequence.process(tempctrl.temp, cur_time)
-    # if sequence.running and not sequence.pause:
-    #     tempctrl.setpoint = sequence.cur_setpoint
-
-    # # if enabled do data recording
-    # if recording_enabled:
-    #     data = ProcessData()
-    #     data.timestamp = cur_time
-    #     data.temp_setpoint = tempctrl.setpoint
-    #     data.temp = tempctrl.temp
-    #     db.session.add(data)
-    #     db.session.commit()
-
-    process_data = get_processdata()
-
-    # if sequence.running:
-    #     process_data['step_id'] = sequence.cur_step.id
-
-    socketio.emit('process_data', process_data)
+    socketio.emit('process_data', processdata)
 
 
 # init background thread
@@ -108,7 +82,10 @@ t.start()
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html', processdata=get_processdata())
+    return render_template(
+        'index.html', processdata=get_processdata(),
+        graph_data=data
+    )
 
 
 @app.route('/tempctrl-settings', methods=['GET', 'POST'])
