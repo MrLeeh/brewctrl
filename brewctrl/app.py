@@ -42,7 +42,8 @@ tempctrl = TempController()
 tempctrl.load_settings()
 data = dict(
     time=[],
-    temp=[]
+    temp=[],
+    temp_setpoint=[]
 )
 
 
@@ -69,6 +70,7 @@ def background_thread():
     processdata = get_processdata()
     data['time'].append(processdata['time'])
     data['temp'].append(processdata['temp'])
+    data['temp_setpoint'].append(processdata['temp_setpoint'])
 
     socketio.emit('process_data', processdata)
 
@@ -113,3 +115,9 @@ def handle_json(json):
 @socketio.on('reset_tempctrl')
 def handle_reset_tempctrl():
     tempctrl.reset = True
+
+
+@socketio.on('reset_graph')
+def handle_reset_graph():
+    for key in data:
+        data[key].clear()
