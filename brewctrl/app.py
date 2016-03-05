@@ -14,8 +14,6 @@ from flask_socketio import SocketIO
 
 from .config import REFRESH_TIME
 from .forms import TempForm, MainForm
-from .models import Base
-from .models import TempCtrl as TempCtrlSettings
 
 # monkey patching for usage of background threads
 import eventlet
@@ -25,8 +23,9 @@ eventlet.monkey_patch()
 app = Flask(__name__)
 app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
-db.Model = Base
 socketio = SocketIO(app)
+
+from .models import TempCtrl as TempCtrlSettings, Step
 
 
 # temperature controller
@@ -58,6 +57,10 @@ def get_processdata():
         'power': tempctrl.power,
         'output': tempctrl.output
     }
+
+
+def get_steps():
+    return Step.query.all()
 
 
 def background_thread():
@@ -95,7 +98,7 @@ def index():
 
     return render_template(
         'home/home.html', form=form, processdata=get_processdata(),
-        graph_data=data
+        graph_data=data, steps=get_steps()
     )
 
 

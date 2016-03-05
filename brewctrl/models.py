@@ -9,7 +9,9 @@ from sqlalchemy import Boolean, Column
 from sqlalchemy import DateTime, Integer, String, Text, Float, Date
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+from .app import db
+
+# Base = declarative_base()
 
 
 # class Receipe(Base):
@@ -19,7 +21,7 @@ Base = declarative_base()
 #     description = Column(Text)
 
 
-class Step(Base):
+class Step(db.Model):
 
     __tablename__ = 'steps'
     id = Column(Integer, primary_key=True)
@@ -34,7 +36,7 @@ class Step(Base):
             self=self)
 
 
-class TempCtrl(Base):
+class TempCtrl(db.Model):
     __tablename__ = 'tempctrl'
     id = Column(Integer, primary_key=True)
     setpoint = Column(Float, default=50.0)
@@ -45,7 +47,7 @@ class TempCtrl(Base):
     manual_power = Column(Float, default=50.0)
 
 
-class ProcessData(Base):
+class ProcessData(db.Model):
 
     __tablename__ = 'processdata'
     id = Column(Integer, primary_key=True)

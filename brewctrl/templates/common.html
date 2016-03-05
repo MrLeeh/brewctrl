@@ -20,7 +20,7 @@
   </div>
 {% endmacro %}
 
-{% macro decimal_field_vertical(field, suffix=None, class=None, accept_btn=False, cancel_btn=False) %}
+{% macro decimal_field_vertical(field, suffix=None, class=None) %}
   <div class="form-group {% if field.errors %} error{% endif %} {{ field.name }}">
     {{ field.label(class="control-label") }}
     <div class="input-group">
@@ -32,10 +32,5 @@
     {% for error in field.errors %}
      <span class="help-inline">{{ error }}</span>
     {% endfor %}
-    {% if cancel_btn %}
-      <div id="{{ field.name }}-cancel" class="btn btn-hidden">
-        <span class="glyphicon glyphicon-remove pull-left"></span>
-      </div>
-    {% endif %}
   </div>
 {% endmacro %}

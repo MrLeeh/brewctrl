@@ -42,6 +42,8 @@ try:
 except IndexError:
     print("No Temp.sensors found. Continue in simulation mode.")
     simulation_mode = True
+    from .simulation import SimulationModel
+    simulation_model = SimulationModel()
 
 
 def read_temp_raw():
@@ -53,7 +55,7 @@ def read_temp_raw():
 
 def read_temp():
     if simulation_mode:
-        temp_c = 20. + (random.random() * 10 - 5)
+        temp_c = simulation_model.temp
         return temp_c
     else:
         lines = read_temp_raw()
@@ -161,6 +163,9 @@ class TempController:
         else:
             self.power = 0.0
             self.output = False
+
+        if simulation_mode:
+            simulation_model.process(self.power)
 
         self.heater_enabled = self.output
         self._prev_time = cur_time
