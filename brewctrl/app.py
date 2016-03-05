@@ -94,7 +94,7 @@ def index():
         form.setpoint.data = tempctrl.setpoint
 
     return render_template(
-        'index.html', form=form, processdata=get_processdata(),
+        'home/home.html', form=form, processdata=get_processdata(),
         graph_data=data
     )
 

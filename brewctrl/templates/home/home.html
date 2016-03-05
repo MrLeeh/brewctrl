@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% from 'navbar.html' import navbar %}
-{% from 'common.html' import decimal_field_vertical %}
 
 {% set title = 'Startseite' %}
 
@@ -9,7 +8,7 @@
 {% endblock %}
 
 {% block style %}
-  <style>{% include 'index.css' %}</style>
+  <style>{% include 'home/home.css' %}</style>
 {% endblock %}
 
 {% block script %}
@@ -18,7 +17,7 @@
   <script type="text/javascript" src="/static/jqwidgets/jqwidgets/jqxchart.js"></script>
   <script type="text/javascript" src="/static/jqwidgets/jqwidgets/jqxgauge.js"></script>
   <script src="/static/plotly.min.js"></script>
-  <script>{% include 'index.js' %}</script>
+  <script>{% include 'home/home.js' %}</script>
 {% endblock %}
 
 {% block main %}
@@ -33,35 +32,7 @@
         </div>
         <div id="collapse-overview" class="panel-collapse collapse in">
           <div class="panel-body" id="panel-overview">
-            <!-- Animation image with gauge -->
-            <div class="col-sm-4">
-              <div class="row">
-                  <form class="form" method="post">
-                    {{ form.hidden_tag() }}
-                    {{ decimal_field_vertical(form.setpoint, '°C', cancel_btn=True) }}
-                  </form>
-              </div>
-              <div class="row">
-                <div style="position: relative">
-                  <img id="img-animation" class="img-responsive image" src="static/images/einkocher.jpg"/>
-                  <div id="gauge" class="gauge"></div>
-                  <div id="power" class="power"></div>
-                </div>
-              </div>
-            </div>
-            <div class="col-sm-8">
-              <div class="col-sm-11">
-                <div id="graph"></div>
-              </div>
-              <div class="col-sm-1">
-                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                  <span class="glyphicon glyphicon-menu-hamburger"></span>
-                </button>
-                <ul class="dropdown-menu">
-                  <li><a href="#" id="btn-reset-graph">Reset</a></li>
-                </ul>
-              </div>
-            </div>
+            {% include "home/overview.html" %}
           </div>
         </div>
       </div>
