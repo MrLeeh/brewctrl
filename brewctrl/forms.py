@@ -27,3 +27,7 @@ class EditForm(Form):
     temp = IntegerField('Temperatur:', [required(), NumberRange(20, 110)])
     timer = IntegerField('Timer:', [NumberRange(0, 120)])
     comment = TextAreaField('Kommentar:')
+
+
+class MainForm(Form):
+    setpoint = DecimalField("Sollwert:", places=1)

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'navbar.html' import navbar %}
+{% from 'common.html' import decimal_field %}
 
 {% block style %}
   <style>
@@ -84,25 +85,6 @@
     });
   </script>
 {% endblock %}
-
-{% macro decimal_field(field, suffix=None, class=None) %}
-  <div class="form-group {% if field.errors %} error{% endif %} {{ field.name }}">
-    {{ field.label(class="control-label col-md-offset-1 col-md-4") }}
-    <div class="col-md-6">
-      <div class="input-group">
-        {{ field(class="form-control", **kwargs) }}
-        {% if suffix %}
-          <div class="input-group-addon suffix">{{ suffix }}</div>
-        {% endif %}
-      </div>
-
-      {% for error in field.errors %}
-       <span class="help-inline">{{ error }}</span>
-      {% endfor %}
-    </div>
-  </div>
-{% endmacro %}
-
 
 {% macro disp_decimal_field(id, label, suffix=None) %}
   <div class="form-group {{ id }}">

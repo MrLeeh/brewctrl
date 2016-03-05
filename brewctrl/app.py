@@ -13,7 +13,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
 from .config import REFRESH_TIME
-from .forms import TempForm
+from .forms import TempForm, MainForm
 from .models import Base
 from .models import TempCtrl as TempCtrlSettings
 
@@ -43,7 +43,8 @@ tempctrl.load_settings()
 data = dict(
     time=[],
     temp=[],
-    temp_setpoint=[]
+    temp_setpoint=[],
+    power=[]
 )
 
 
@@ -71,6 +72,7 @@ def background_thread():
     data['time'].append(processdata['time'])
     data['temp'].append(processdata['temp'])
     data['temp_setpoint'].append(processdata['temp_setpoint'])
+    data['power'].append(processdata['power'])
 
     socketio.emit('process_data', processdata)
 
@@ -81,11 +83,18 @@ t.daemon = True
 t.start()
 
 
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 def index():
+    form = MainForm(request.form)
+
+    if form.validate_on_submit():
+        tempctrl.setpoint = float(form.setpoint.data)
+    else:
+        form.setpoint.data = tempctrl.setpoint
+
     return render_template(
-        'index.html', processdata=get_processdata(),
+        'index.html', form=form, processdata=get_processdata(),
         graph_data=data
     )
 
@@ -106,6 +115,11 @@ def tempctrl_settings():
                            processdata=get_processdata())
 
 
+@app.route('/steps')
+def steps():
+    return render_template('steps.html')
+
+
 @socketio.on('enable_tempctrl')
 def handle_json(json):
     enable = json['data']
@@ -121,3 +135,8 @@ def handle_reset_tempctrl():
 def handle_reset_graph():
     for key in data:
         data[key].clear()
+
+
+@socketio.on('set_setpoint')
+def handle_set_setpoint(setpoint):
+    tempctrl.setpoint = setpoint

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'navbar.html' import navbar %}
+{% from 'common.html' import decimal_field_vertical %}
 
 {% set title = 'Startseite' %}
 
@@ -7,46 +8,8 @@
   {{ navbar(processdata.active) }}
 {% endblock %}
 
-
 {% block style %}
-  <style>
-    .progress.vertical {
-        position: relative;
-        width: 20px;
-        min-height: 240px;
-        float: left;
-        margin-right: 20px;
-        background: none;
-        -webkit-box-shadow: none;
-        -moz-box-shadow: none;
-        box-shadow: none;
-        border: none;
-    }
-
-    .image {
-      position: relative;
-      max-width: 70%;
-      border: "5px solid black";
-    }
-
-
-    .gauge {
-      position: absolute;
-      top: 0px;
-      left: 255px;
-      width: 100%;
-    }
-
-    .power {
-      position: absolute;
-      top: 0%;
-      left: 0%;
-      width: 100px;
-      font-size: 18px;
-      text-align: center;
-    }
-
-  </style>
+  <style>{% include 'index.css' %}</style>
 {% endblock %}
 
 {% block script %}
@@ -55,160 +18,11 @@
   <script type="text/javascript" src="/static/jqwidgets/jqwidgets/jqxchart.js"></script>
   <script type="text/javascript" src="/static/jqwidgets/jqwidgets/jqxgauge.js"></script>
   <script src="/static/plotly.min.js"></script>
-
-  <script type="text/javascript">
-    var data_x = [];
-    var data_temp = [];
-    var data_setpoint = [];
-    var pause = false;
-
-
-    function relayout_graph() {
-      var small = $(window).width() < 700;
-        if (small) {
-            var update = {margin: {t: 50, l: 30, r: 0, b: 80}};
-        }
-        else {
-            var update = {margin: {t: 50, l: 50, r: 50, b: 50}};
-        }
-        Plotly.relayout(graph, update);
-      };
-
-
-    $(document).ready(function() {
-      // Socket data
-      var socket = io.connect('http://' + document.domain + ':' + location.port);
-
-      // diagram init
-      var graph = $('#graph').get(0);
-      var graph_data = {{ graph_data | tojson }}
-
-      data_x = graph_data.time;
-      data_temp = graph_data.temp;
-      data_setpoint = graph_data.temp_setpoint;
-
-      var trace_temp = {
-        x: data_x,
-        y: data_temp,
-        name: "Temperatur"
-      };
-
-      var trace_setpoint = {
-        x: data_x,
-        y: data_setpoint,
-        name: "Sollwert"
-      }
-
-      Plotly.plot( graph, [trace_temp, trace_setpoint], {
-        margin: {
-            l: 50,
-            r: 50,
-            b: 50,
-            t: 50,
-            pad: 4
-        },
-        legend: {
-          x: 0,
-          y: 1,
-          traceorder: 'normal',
-          font: {
-            family: 'sans-serif',
-            size: 12,
-            color: '#000'
-          },
-          bgcolor: '#E2E2E2',
-          bordercolor: '#FFFFFF',
-          borderwidth: 2
-        }
-      });
-      relayout_graph();
-
-      // socket action
-      socket.on('process_data', function(data) {
-        // Add data to graph
-        if (!pause) {
-          data_x.push(data.time);
-          data_temp.push(data.temp);
-          data_setpoint.push(data.temp_setpoint);
-          Plotly.redraw(graph);
-        }
-
-        // Show current Temp in gauge
-        $('#power').text(data.power.toFixed(0) + "%")
-        $('#gauge').jqxLinearGauge('value', data.temp);
-      });
-
-      // Reset graph button
-      $('#btn-reset-graph').click(function() {
-        socket.emit('reset_graph');
-        data_x.length = 0;
-        data_temp.length = 0;
-        Plotly.redraw(graph);
-      });
-
-      $('#btn-pause-graph').click(function() {
-        pause = !pause;
-        if (pause) {
-          $(this).text("Fortsetzen");
-        }
-        else {
-          $(this).text("Pause");
-        }
-      });
-
-      // Resize plotly with window
-      $(window).resize(function() {
-        Plotly.Plots.resize(graph);
-        relayout_graph();
-      });
-
-      // Image Size
-      $('#img-animation').load(function() {
-        var width = $('#img-animation').width();
-        var height = $('#img-animation').height();
-        console.log(width, height);
-        $('#power').css('top', (height / 2.4) + 'px');
-        $('#power').css('left', (width / 3.0) + 'px');
-
-        // gauge init
-        $('#gauge').jqxLinearGauge({
-            max: 100,
-            min: 0,
-            background: { visible: false},
-            pointer: { size: '5%' },
-            colorScheme: 'scheme03',
-            ticksMajor: { size: '10%', interval: 10 },
-            ticksMinor: { size: '5%', interval: 2.5, style: { 'stroke-width': 1, stroke: '#aaaaaa'} },
-            value: 0,
-            width: 70,
-            height: height,
-            labels: { interval: 10, formatValue: function (value, position) {
-              if (position === 'far') {
-                  return value;
-              }
-              else if (position === 'near') {
-                if (value == 100) {
-                    return '°C';
-                }
-              }
-            },
-          }
-        });
-
-        // gauge position
-        $('#gauge').css('top', 0 + 'px');
-        $('#gauge').css('left', width + 'px');
-
-      });
-    });
-
-  </script>
-
+  <script>{% include 'index.js' %}</script>
 {% endblock %}
 
 {% block main %}
   <legend>{{ title }}</legend>
-
   <div class="row">
     <div class="col-md-12">
       <div class="panel panel-primary">
@@ -219,10 +33,34 @@
         </div>
         <div id="collapse-overview" class="panel-collapse collapse in">
           <div class="panel-body" id="panel-overview">
-            <div style="position: relative">
-              <img id="img-animation" class="img-responsive image" src="static/images/einkocher.jpg"/>
-              <div id="gauge" class="gauge"></div>
-              <div id="power" class="power"></div>
+            <!-- Animation image with gauge -->
+            <div class="col-sm-4">
+              <div class="row">
+                  <form class="form" method="post">
+                    {{ form.hidden_tag() }}
+                    {{ decimal_field_vertical(form.setpoint, '°C', cancel_btn=True) }}
+                  </form>
+              </div>
+              <div class="row">
+                <div style="position: relative">
+                  <img id="img-animation" class="img-responsive image" src="static/images/einkocher.jpg"/>
+                  <div id="gauge" class="gauge"></div>
+                  <div id="power" class="power"></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-8">
+              <div class="col-sm-11">
+                <div id="graph"></div>
+              </div>
+              <div class="col-sm-1">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                  <span class="glyphicon glyphicon-menu-hamburger"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a href="#" id="btn-reset-graph">Reset</a></li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -235,14 +73,11 @@
       <div class="panel panel-primary">
         <div class="panel-heading" data-toggle="collapse" data-target="#collapse-graph">
           <h4 class="panel-title">
-            <a data-toggle="collapse" href="#collapse-graph">Diagramm</a>
+            <a data-toggle="collapse" href="#collapse-graph">Ablauf</a>
           </h4>
         </div>
         <div id="collapse-graph" class="panel-collapse collapse in">
           <div class="panel-body" id="panel-graph">
-            <div id="graph"></div>
-            <button id="btn-pause-graph" class="btn btn-default">Pause</button>
-            <button id="btn-reset-graph" class="btn btn-danger">Reset</button>
           </div>
         </div>
       </div>

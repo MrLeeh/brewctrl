@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% from 'common.html' import modal %}
 {% set title = 'Maischeschritte' %}
 
 {% block main %}
@@ -25,7 +24,7 @@
             type: 'DELETE',
             success: function(response) {
               if (response.status == 'OK') {
-                window.location = '{{ url_for('handle_steps') }}';
+                window.location = '{{ url_for('steps') }}';
               } else {
               alert('Delete failed.')
             }
@@ -146,6 +145,5 @@
   </div>
 </div>
 
-{{ modal() }}
 {% endblock %}
 
