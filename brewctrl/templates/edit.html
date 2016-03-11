@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% from 'common.html' import decimal_field, edit_field %}
+
+{% if request.endpoint.endswith('add_step') %}
+  {% set title = 'Maischeschritt hinzufügen' %}
+{% else %}
+  {% set title = 'Maischeschritt bearbeiten' %}
+{% endif %}
+
+{% block title %}Brewctrl - Home{% endblock %}
+
+{% block main %}
+
+<legend> {{ title }}</legend>
+<div class="well col-sm-offset-2 col-sm-8">
+  <form method="post" class="form-horizontal">
+    {{ edit_field(form.name) }}
+    {{ edit_field(form.temp, suffix="°C", type="number") }}
+    {{ edit_field(form.timer, suffix="min", type="number") }}
+    {{ edit_field(form.comment, rows="5") }}
+    <div class="form-actions">
+      <button type="submit" class="btn">Save</button>
+      or <a href="{{ url_for('handle_steps') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+

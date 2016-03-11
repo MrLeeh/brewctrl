@@ -8,7 +8,7 @@ licensed under the MIT license
 from datetime import datetime
 from threading import Timer
 
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
@@ -25,7 +25,7 @@ app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-from .models import TempCtrl as TempCtrlSettings, Step, State
+from .models import TempCtrl as TempCtrlSettings, Step
 
 # temperature controller
 from .control import TempController
@@ -170,19 +170,74 @@ def edit_step(step_id):
                            form=form, processdata=get_processdata())
 
 
-@app.route('/')
+@app.route('/steps/<int:step_id>/insert_before/', methods=['GET', 'POST'])
 def insert_step_before(step_id):
-    print(step_id)
+    ref_step = Step.query.get(step_id)
+    ref_order = ref_step.order
+
+    steps = Step.query.order_by(Step.order).all()
+    insert = False
+    for step in steps:
+        if step.id == step_id:
+            insert = True
+        if insert:
+            step.order += 1
+    new_step = Step()
+    new_step.order = ref_order
+    db.session.add(new_step)
+
+    form = EditForm(obj=new_step)
+    if form.validate_on_submit():
+        form.populate_obj(new_step)
+        db.session.commit()
+        return redirect(url_for('steps'))
+    return render_template('steps/edit.html',
+                           form=form, processdata=get_processdata())
 
 
-@app.route('/')
+@app.route('/steps/<int:step_id>/insert_after/', methods=['GET', 'POST'])
 def insert_step_after(step_id):
-    pass
+    ref_step = db.session.query(Step).get(step_id)
+    ref_order = ref_step.order
+    steps = db.session.query(Step).order_by(Step.order).all()
+
+    insert = False
+    for step in steps:
+        if insert:
+            step.order += 1
+        elif step.id == step_id:
+            insert = True
+
+    new_step = Step()
+    new_step.order = ref_order + 1
+    db.session.add(new_step)
+
+    form = EditForm(request.form, new_step)
+
+    if form.validate_on_submit():
+        form.populate_obj(new_step)
+        db.session.commit()
+        return redirect(url_for('steps'))
+
+    return render_template('steps/edit.html',
+                           form=form, processdata=get_processdata())
 
 
-@app.route('/')
+@app.route('/steps/<int:step_id>/delete/', methods=['DELETE'])
 def delete_step(step_id):
-    pass
+    step = db.session.query(Step).get(step_id)
+    if step is None:
+        response = jsonify({'status': 'Not found'})
+        response.status = 404
+        return response
+    db.session.delete(step)
+    db.session.commit()
+
+    steps = db.session.query(Step).order_by(Step.order).all()
+    for i, step in enumerate(steps):
+        step.order = i
+    db.session.commit()
+    return jsonify({'status': 'OK'})
 
 
 @socketio.on('enable_tempctrl')
@@ -211,3 +266,27 @@ def handle_set_setpoint(setpoint):
 def handle_start_sequence():
     tempctrl.active = True
     sequence.start()
+
+
+@socketio.on('step_moved')
+def step_moved(data):
+    steps = db.session.query(Step).order_by(Step.order).all()
+
+    # source step
+    src = data['src']
+    src_step = next(filter(lambda x: x.order == src, steps))
+
+    # destination step
+    dst = data['dst']
+    dst_step = next(filter(lambda x: x.order == dst, steps))
+
+    steps.remove(src_step)
+    steps.insert(
+        steps.index(dst_step)
+        if src > dst else steps.index(dst_step) + 1, src_step
+    )
+
+    for i, step in enumerate(steps):
+        step.order = i
+
+    db.session.commit()
