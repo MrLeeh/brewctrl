@@ -13,7 +13,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 
 from .config import REFRESH_TIME
-from .forms import TempForm, MainForm
+from .forms import TempForm, MainForm, EditForm
 
 # monkey patching for usage of background threads
 import eventlet
@@ -25,8 +25,7 @@ app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-from .models import TempCtrl as TempCtrlSettings, Step
-
+from .models import TempCtrl as TempCtrlSettings, Step, State
 
 # temperature controller
 from .control import TempController
@@ -39,6 +38,7 @@ if tempctrl_settings is None:
 
 tempctrl = TempController()
 tempctrl.load_settings()
+
 data = dict(
     time=[],
     temp=[],
@@ -46,9 +46,13 @@ data = dict(
     power=[]
 )
 
+# sequence object
+from .sequence import Sequence
+sequence = Sequence()
+
 
 def get_processdata():
-    return {
+    processdata = {
         'temp': tempctrl.temp,
         'temp_setpoint': tempctrl.setpoint,
         'time': str(datetime.now()),
@@ -58,25 +62,50 @@ def get_processdata():
         'output': tempctrl.output
     }
 
+    sequence_dict = {
+        'running': sequence.running
+    }
+
+    if sequence.running:
+        step = sequence.cur_step
+
+        sequence_dict.update({
+            'step_id': step.id,
+            'state': str(step.state),
+            'state_str': step.state_str,
+            'elapsed_time': step.elapsed_time_str
+        })
+
+    processdata['sequence'] = sequence_dict
+    return processdata
+
 
 def get_steps():
-    return Step.query.all()
+    return Step.query.order_by(Step.order).all()
 
 
 def background_thread():
+    cur_time = datetime.now()
+
     # restart timer
     t = Timer(REFRESH_TIME, background_thread)
     t.daemon = True
     t.start()
 
     # process temperature controller
-    tempctrl.process()
+    tempctrl.process(cur_time)
     processdata = get_processdata()
     data['time'].append(processdata['time'])
     data['temp'].append(processdata['temp'])
     data['temp_setpoint'].append(processdata['temp_setpoint'])
     data['power'].append(processdata['power'])
 
+    # process sequence controller
+    sequence.process(tempctrl.temp, cur_time)
+    if sequence.running and sequence.setpoint is not None:
+        tempctrl.setpoint = sequence.setpoint
+
+    # emit data
     socketio.emit('process_data', processdata)
 
 
@@ -96,9 +125,13 @@ def index():
     else:
         form.setpoint.data = tempctrl.setpoint
 
+    steps = sequence.steps
+    if len(steps) == 0:
+        steps = get_steps()
+
     return render_template(
         'home/home.html', form=form, processdata=get_processdata(),
-        graph_data=data, steps=get_steps()
+        graph_data=data, steps=steps
     )
 
 
@@ -120,7 +153,36 @@ def tempctrl_settings():
 
 @app.route('/steps')
 def steps():
-    return render_template('steps.html')
+    return render_template('steps.html', steps=get_steps(), processdata=get_processdata())
+
+
+@app.route('/steps/<int:step_id>/edit', methods=['GET', 'POST'])
+def edit_step(step_id):
+    step = Step.query.get(step_id)
+    form = EditForm(obj=step)
+
+    if form.validate_on_submit():
+        form.populate_obj(step)
+        db.session.commit()
+        return redirect(url_for('steps'))
+
+    return render_template('steps/edit.html',
+                           form=form, processdata=get_processdata())
+
+
+@app.route('/')
+def insert_step_before(step_id):
+    print(step_id)
+
+
+@app.route('/')
+def insert_step_after(step_id):
+    pass
+
+
+@app.route('/')
+def delete_step(step_id):
+    pass
 
 
 @socketio.on('enable_tempctrl')
@@ -143,3 +205,9 @@ def handle_reset_graph():
 @socketio.on('set_setpoint')
 def handle_set_setpoint(setpoint):
     tempctrl.setpoint = setpoint
+
+
+@socketio.on('start_sequence')
+def handle_start_sequence():
+    tempctrl.active = True
+    sequence.start()

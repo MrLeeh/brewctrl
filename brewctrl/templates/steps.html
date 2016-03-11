@@ -1,14 +1,30 @@
 {% extends 'base.html' %}
+{% from 'navbar.html' import navbar %}
+
+
 {% set title = 'Maischeschritte' %}
 
-{% block main %}
 
+{% block navbar %}
+  {{ navbar(processdata.active) }}
+{% endblock %}
+
+
+{% block style %}
+{% endblock %}
+
+
+{% block script %}
+{% endblock %}
+
+
+{% block main %}
   <script src="/static/socket.io-1.3.7.js"></script>
   <script src="/static/plotly.min.js"></script>
   <script type="text/javascript" charset="utf-8">
 
     // set nav element as active
-    document.getElementById('nav_steps').className="active"
+    // document.getElementById('nav_steps').className="active"
 
     $(document).ready(function(){
       namespace = '/brewctrl';
@@ -34,8 +50,6 @@
         });
       });
 
-      var graph = {{graphJSON | safe}};
-      Plotly.plot('graph', graph.data, graph.layout, graph.config);
 
       // Handle sorting of steps
       // Return a helper with preserved width of cells
@@ -81,16 +95,6 @@
         // set modal url for deleting
         modal.find('#modalOk').attr("data-delete-url", url)
       });
-
-      // draw graph
-      socket.on('steps', function(data) {
-        // plot current temp
-        graph.data[0].x = data.time;
-        graph.data[0].y = data.sp;
-
-        Plotly.redraw('graph');
-      });
-
       //
     });
   </script>
@@ -103,13 +107,14 @@
   </style>
 
   <legend> {{ title }}</legend>
-  <div class="col-md-offset-3 col-md-6">
+  <div class="col-sm-6">
     <table id="sort" class="table table-hover">
       <thead>
         <tr>
           <th>Schritt</th>
           <th align="center">Temperatur</th>
           <th align="center">Timer</th>
+          <th>Kommentar</th>
           <th></th>
         </tr>
       </thead>
@@ -117,8 +122,9 @@
         {% for step in steps %}
           <tr id="step-{{ step.id }}">
             <td>{{ step.name }}</td>
-            <td align="center">{{ "{:.0f} °C".format(step.temp) }}</td>
+            <td align="center">{{ "{:.0f} °C".format(step.setpoint) }}</td>
             <td align="center">{{ "{} min".format(step.timer) }}</td>
+            <td align="left">{% if not step.comment %}-{% else %}{{ step.comment }}{% endif %}</td>
             <td>
               <span class="dropdown">
                 <button class="btn-xs btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
@@ -140,10 +146,5 @@
     </table>
   </div>
 </div>
-<div class="col-md-offset-3 col-md-6">
-  <div id="graph">
-  </div>
-</div>
-
 {% endblock %}
 

@@ -1,23 +1,89 @@
+{% macro get_row_style(step) %}
+  {% if step.state|safe == 'State.DONE' %}
+    success
+  {% elif step.state|safe == 'State.ABORTED' %}
+    danger
+  {% endif %}
+{% endmacro %}
+
+<script>
+  $(document).ready(function() {
+
+    $('#sequence-modal button#start-sequence-ok').click(function() {
+      socket.emit('start_sequence')
+      $('.step-row').each(function(index, item) {
+        $(item).removeClass('success danger');
+        $(item).children('td').eq(3).text('');
+        $(item).children('td').eq(4).text('-');
+      });
+    });
+
+    socket.on('process_data', function(cur_data) {
+      // mark current step
+      console.log(cur_data.sequence);
+
+      if (cur_data.sequence.running) {
+        var $cur_row = $('#step-row-' + cur_data.sequence.step_id);
+        var step_state = cur_data.sequence.state;
+
+        if (['State.HEATUP', 'State.REST'].indexOf(step_state) >= 0) {
+          $cur_row.addClass('active');
+        }
+        else if (step_state == 'State.DONE') {
+          $cur_row.removeClass('active');
+          $cur_row.addClass('success');
+        }
+
+        var parts = cur_data.sequence.elapsed_time.split('.');
+        $cur_row.children('td').eq(3).text(cur_data.sequence.state_str);
+        $cur_row.children('td').eq(4).text(parts[0])
+      }
+    });
+  });
+</script>
+
 <div class="row">
   <div class="col-sm-12">
-    <button type="button" class="btn btn-primary">Starten</button>
+    <button type="button" id="start-sequence" data-toggle="modal" data-target="#sequence-modal" class="btn btn-primary">Starten</button>
   </div>
 </div>
-<div class="row">
+<div class="row" style="margin-top: 15px">
   <div class="col-sm-6">
     <table class="table">
       <tr>
         <th>Name</th>
         <th>Temperatur</th>
         <th>Dauer</th>
+        <th>Status</th>
+        <th>Zeit</th>
       </tr>
       {% for step in steps %}
-      <tr>
+      <tr id="step-row-{{ step.id }}" class="step-row {{ get_row_style(step) }}">
         <td>{{ step.name }}</td>
-        <td>{{ step.temp }} °C</td>
+        <td>{{ step.setpoint }} °C</td>
         <td>{{ step.timer }} Min.</td>
+        <td>{{ step.state_str }}</td>
+        <td>{{ step.elapsed_time_str }}</td>
       </tr>
       {% endfor %}
     </table>
   </div>
 </div>
+
+<div id="sequence-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Maischeverlauf starten</h4>
+      </div>
+      <div class="modal-body">
+        <p>Möchtest du den  Maischeverlauf starten?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+        <button id="start-sequence-ok" type="button" data-dismiss="modal" class="btn btn-primary">Ok</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

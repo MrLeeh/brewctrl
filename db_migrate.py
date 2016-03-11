@@ -13,7 +13,7 @@ import imp
 from migrate.versioning import api
 from brewctrl.config import SQLALCHEMY_DATABASE_URI
 from brewctrl.config import SQLALCHEMY_MIGRATE_REPO
-from brewctrl.models import Base
+from brewctrl.app import db
 
 v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
 
@@ -24,7 +24,7 @@ old_model = api.create_model(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
 exec(old_model, tmp_module.__dict__)
 script = api.make_update_script_for_model(
     SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO,
-    tmp_module.meta, Base.metadata
+    tmp_module.meta, db.metadata
 )
 
 open(migration, "wt").write(script)

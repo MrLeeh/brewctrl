@@ -122,8 +122,7 @@ class TempController:
         self.reset = False
         self.output = False
 
-    def process(self):
-        cur_time = datetime.utcnow()
+    def process(self, cur_time=datetime.utcnow()):
 
         if self._prev_time is not None:
             self._time_delta = (cur_time - self._prev_time).total_seconds()

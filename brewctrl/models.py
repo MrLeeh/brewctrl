@@ -5,9 +5,10 @@ copyright (c) 2016 by Stefan Lehmann,
 licensed under the MIT license
 
 """
-from sqlalchemy import Boolean, Column
-from sqlalchemy import DateTime, Integer, String, Text, Float, Date
-from sqlalchemy.ext.declarative import declarative_base
+from enum import Enum
+from datetime import timedelta
+
+from sqlalchemy import Column, DateTime, Integer, String, Text, Float
 
 from .app import db
 
@@ -21,22 +22,55 @@ from .app import db
 #     description = Column(Text)
 
 
+class State(Enum):
+    INACTIVE = 0
+    HEATUP = 1
+    REST = 2
+    DONE = 3
+
+
 class Step(db.Model):
 
     __tablename__ = 'steps'
     id = Column(Integer, primary_key=True)
     order = Column(Integer())
     name = Column(String(80))
-    temp = Column(Integer())
+    setpoint = Column(Integer())
     timer = Column(Integer())
     comment = Column(Text())
+    state = State.INACTIVE
+    start_time = None
+    elapsed_time = timedelta()
 
     def __repr__(self):
         return '<{self.__class__.__name__}: {self.id}{self.name}>'.format(
             self=self)
 
+    @property
+    def state_str(self):
+        s = {
+            State.INACTIVE: '',
+            State.HEATUP: 'Aufheizen',
+            State.REST: 'Rasten',
+            State.DONE: 'Abgeschlossen'
+        }
+        return s[self.state]
+
+    @property
+    def elapsed_time_str(self):
+        td = self.elapsed_time
+        if td == timedelta():
+            return '-'
+        else:
+            return '{mins:02d}:{secs:02d}'.format(
+                mins=td.seconds // 60,
+                secs=td.seconds % 60
+            )
+        return self._elapsed_time_str
+
 
 class TempCtrl(db.Model):
+
     __tablename__ = 'tempctrl'
     id = Column(Integer, primary_key=True)
     setpoint = Column(Float, default=50.0)

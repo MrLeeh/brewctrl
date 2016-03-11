@@ -18,3 +18,4 @@ SECRET_KEY = 'my secret key'
 
 # update time in seconds
 REFRESH_TIME = 1.0
+DELTA_TEMP = 1.0

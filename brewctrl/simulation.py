@@ -14,7 +14,7 @@ from datetime import datetime
 class SimulationModel:
 
     def __init__(self):
-        self.T1 = 120
+        self.T1 = 30
         self.K = 1.0
         self.temp = 20
 

@@ -24,7 +24,7 @@ class TempForm(Form):
 
 class EditForm(Form):
     name = TextField('Name:', [required(), Length(max=80)])
-    temp = IntegerField('Temperatur:', [required(), NumberRange(20, 110)])
+    setpoint = IntegerField('Temperatur:', [required(), NumberRange(20, 110)])
     timer = IntegerField('Timer:', [NumberRange(0, 120)])
     comment = TextAreaField('Kommentar:')
 
