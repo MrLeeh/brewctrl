@@ -31,6 +31,7 @@
       <li><a href="{{ url_for('add_step') }}">Schritt hinzufügen</a></li>
     </ul>
   </li>
+
   <li class="dropdown">
     <a id="nav_temp" href="{{ url_for('handle_temp') }}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Temperaturverlauf<span class="caret"></span></a>
     <ul class="dropdown-menu">
@@ -43,6 +44,23 @@
     </ul>
   </li>
   #}
+
+  <li class="dropdown">
+    <a id="nav-progress" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
+      Verlauf
+      <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+      <li><a href="#">Anzeigen</a></li>
+      <li role="separator" class="divider"></li>
+      <li><a href="#">Laden...</a></li>
+      <li><a href="#">Speichern...</a></li>
+      <li role="separator" class="divider"></li>
+      <li><a href="#">Aufzeichnung starten</a></li>
+      <li class="disabled"><a href="#">Aufzeichnung anhalten</a></li>
+      <li class="disabled"><a href="#">Aufzeichnung stoppen</a></li>
+    </ul>
+  </li>
 
   <li class="drowdown">
     <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Einstellungen<span class="caret"></span></a>

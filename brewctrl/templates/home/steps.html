@@ -5,9 +5,16 @@
     danger
   {% endif %}
 {% endmacro %}
+<style type="text/css">
+  .skip-btn {
+    display: none;
+  }
+</style>
 
 <script>
   $(document).ready(function() {
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    var $cur_row;
 
     $('#sequence-modal button#start-sequence-ok').click(function() {
       socket.emit('start_sequence')
@@ -16,22 +23,35 @@
         $(item).children('td').eq(3).text('');
         $(item).children('td').eq(4).text('-');
       });
+      $('button#start-sequence').hide();
+      $('button#stop-sequence').show();
+    });
+
+    $('button#stop-sequence').click(function() {
+      socket.emit('stop_sequence');
+      $('button#start-sequence').show();
+      $('button#stop-sequence').hide();
     });
 
     socket.on('process_data', function(cur_data) {
       // mark current step
-      console.log(cur_data.sequence);
-
+      $cur_row = $('#step-row-' + cur_data.sequence.step_id);
       if (cur_data.sequence.running) {
-        var $cur_row = $('#step-row-' + cur_data.sequence.step_id);
         var step_state = cur_data.sequence.state;
 
         if (['State.HEATUP', 'State.REST'].indexOf(step_state) >= 0) {
           $cur_row.addClass('active');
+          $cur_row.find('.skip-btn').show();
         }
         else if (step_state == 'State.DONE') {
           $cur_row.removeClass('active');
           $cur_row.addClass('success');
+          $cur_row.find('.skip-btn').hide();
+        }
+        else if (step_state == 'State.SKIPPED') {
+          $cur_row.removeClass('active');
+          $cur_row.addClass('danger');
+          $cur_row.find('.skip-btn').hide();
         }
 
         var parts = cur_data.sequence.elapsed_time.split('.');
@@ -39,12 +59,17 @@
         $cur_row.children('td').eq(4).text(parts[0])
       }
     });
+
+    $('.skip-btn').click(function() {
+      socket.emit('skip_current_step');
+    });
   });
 </script>
 
 <div class="row">
   <div class="col-sm-12">
     <button type="button" id="start-sequence" data-toggle="modal" data-target="#sequence-modal" class="btn btn-primary">Starten</button>
+    <button type="button" id="stop-sequence" class="btn btn-primary">Stoppen</button>
   </div>
 </div>
 <div class="row" style="margin-top: 15px">
@@ -56,6 +81,7 @@
         <th>Dauer</th>
         <th>Status</th>
         <th>Zeit</th>
+        <th></th>
       </tr>
       {% for step in steps %}
       <tr id="step-row-{{ step.id }}" class="step-row {{ get_row_style(step) }}">
@@ -64,6 +90,7 @@
         <td>{{ step.timer }} Min.</td>
         <td>{{ step.state_str }}</td>
         <td>{{ step.elapsed_time_str }}</td>
+        <td><button class="btn btn-default btn-xs skip-btn">Überspringen</button>
       </tr>
       {% endfor %}
     </table>

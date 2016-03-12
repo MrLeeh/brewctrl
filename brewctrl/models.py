@@ -27,6 +27,7 @@ class State(Enum):
     HEATUP = 1
     REST = 2
     DONE = 3
+    SKIPPED = 4
 
 
 class Step(db.Model):
@@ -52,7 +53,8 @@ class Step(db.Model):
             State.INACTIVE: '',
             State.HEATUP: 'Aufheizen',
             State.REST: 'Rasten',
-            State.DONE: 'Abgeschlossen'
+            State.DONE: 'Abgeschlossen',
+            State.SKIPPED: 'Abgebrochen'
         }
         return s[self.state]
 

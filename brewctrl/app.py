@@ -73,7 +73,8 @@ def get_processdata():
             'step_id': step.id,
             'state': str(step.state),
             'state_str': step.state_str,
-            'elapsed_time': step.elapsed_time_str
+            'elapsed_time': step.elapsed_time_str,
+            'step_changed': sequence.step_changed
         })
 
     processdata['sequence'] = sequence_dict
@@ -102,7 +103,9 @@ def background_thread():
 
     # process sequence controller
     sequence.process(tempctrl.temp, cur_time)
-    if sequence.running and sequence.setpoint is not None:
+    if (        sequence.running
+            and sequence.setpoint is not None
+            and sequence.step_changed):
         tempctrl.setpoint = sequence.setpoint
 
     # emit data
@@ -153,7 +156,7 @@ def tempctrl_settings():
 
 @app.route('/steps')
 def steps():
-    return render_template('steps.html', steps=get_steps(), processdata=get_processdata())
+    return render_template('receipe/steps.html', steps=get_steps(), processdata=get_processdata())
 
 
 @app.route('/steps/<int:step_id>/edit', methods=['GET', 'POST'])
@@ -166,7 +169,7 @@ def edit_step(step_id):
         db.session.commit()
         return redirect(url_for('steps'))
 
-    return render_template('steps/edit.html',
+    return render_template('receipe/edit_step.html',
                            form=form, processdata=get_processdata())
 
 
@@ -191,7 +194,7 @@ def insert_step_before(step_id):
         form.populate_obj(new_step)
         db.session.commit()
         return redirect(url_for('steps'))
-    return render_template('steps/edit.html',
+    return render_template('receipe/edit_step.html',
                            form=form, processdata=get_processdata())
 
 
@@ -219,7 +222,7 @@ def insert_step_after(step_id):
         db.session.commit()
         return redirect(url_for('steps'))
 
-    return render_template('steps/edit.html',
+    return render_template('receipe/edit_step.html',
                            form=form, processdata=get_processdata())
 
 
@@ -268,6 +271,11 @@ def handle_start_sequence():
     sequence.start()
 
 
+@socketio.on('stop_sequence')
+def stop_sequence():
+    sequence.stop()
+
+
 @socketio.on('step_moved')
 def step_moved(data):
     steps = db.session.query(Step).order_by(Step.order).all()
@@ -290,3 +298,8 @@ def step_moved(data):
         step.order = i
 
     db.session.commit()
+
+
+@socketio.on('skip_current_step')
+def skip_current_step():
+    sequence.skip_current_step()

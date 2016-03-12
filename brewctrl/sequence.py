@@ -32,6 +32,7 @@ class Sequence:
 
         # status attributes
         self.running = False
+        self.step_changed = False
         self.steps = []
 
     def start(self, cur_time=datetime.now()):
@@ -50,7 +51,6 @@ class Sequence:
 
         self.cur_step_nr = 0
         step = self.steps[0]
-        step.state = State.HEATUP
         self.running = True
 
     def stop(self):
@@ -59,8 +59,15 @@ class Sequence:
 
         self.running = False
 
+    def skip_current_step(self):
+        step = self.cur_step
+        if step is None:
+            return
+        step.state = State.SKIPPED
+
     def process(self, temp, cur_time=datetime.now()):
         self.cur_time = cur_time
+        self.step_changed = False
 
         if not self.running:
             return
@@ -71,6 +78,7 @@ class Sequence:
         step = self.steps[self.cur_step_nr]
 
         if step.state == State.INACTIVE:
+            self.step_changed = True
             step.state = State.HEATUP
 
         if step.state == State.HEATUP:
@@ -85,7 +93,7 @@ class Sequence:
             if td_to_min(step.elapsed_time) >= step.timer:
                 step.state = State.DONE
 
-        elif step.state == State.DONE:
+        elif step.state in (State.DONE, State.SKIPPED):
                 self.cur_step_nr += 1
 
         if self.cur_step_nr >= len(self.steps):
