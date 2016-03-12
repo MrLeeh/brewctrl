@@ -16,27 +16,28 @@
     var socket = io.connect('http://' + document.domain + ':' + location.port);
     var $cur_row;
 
-    $('#sequence-modal button#start-sequence-ok').click(function() {
+    $('button#start-sequence-ok').click(function() {
       socket.emit('start_sequence')
       $('.step-row').each(function(index, item) {
         $(item).removeClass('success danger');
         $(item).children('td').eq(3).text('');
         $(item).children('td').eq(4).text('-');
       });
-      $('button#start-sequence').hide();
-      $('button#stop-sequence').show();
+
     });
 
-    $('button#stop-sequence').click(function() {
+    $('button#stop-sequence-ok').click(function() {
       socket.emit('stop_sequence');
-      $('button#start-sequence').show();
-      $('button#stop-sequence').hide();
     });
 
     socket.on('process_data', function(cur_data) {
       // mark current step
       $cur_row = $('#step-row-' + cur_data.sequence.step_id);
       if (cur_data.sequence.running) {
+
+        $('button#start-sequence').hide();
+        $('button#stop-sequence').show();
+
         var step_state = cur_data.sequence.state;
 
         if (['State.HEATUP', 'State.REST'].indexOf(step_state) >= 0) {
@@ -58,18 +59,31 @@
         $cur_row.children('td').eq(3).text(cur_data.sequence.state_str);
         $cur_row.children('td').eq(4).text(parts[0])
       }
+      else {
+        $('button#start-sequence').show();
+        $('button#stop-sequence').hide();
+      }
     });
 
     $('.skip-btn').click(function() {
       socket.emit('skip_current_step');
     });
+
+    if ({{ processdata['sequence']['running']|tojson }}) {
+      $('button#start-sequence').hide();
+      $('button#stop-sequence').show();
+    }
+    else {
+      $('button#start-sequence').show();
+      $('button#stop-sequence').hide();
+    }
   });
 </script>
 
 <div class="row">
   <div class="col-sm-12">
-    <button type="button" id="start-sequence" data-toggle="modal" data-target="#sequence-modal" class="btn btn-primary">Starten</button>
-    <button type="button" id="stop-sequence" class="btn btn-primary">Stoppen</button>
+    <button type="button" id="start-sequence" data-toggle="modal" data-target="#start-sequence-modal" class="btn btn-primary">Starten</button>
+    <button type="button" id="stop-sequence" data-toggle="modal" data-target="#stop-sequence-modal" class="btn btn-primary">Stoppen</button>
   </div>
 </div>
 <div class="row" style="margin-top: 15px">
@@ -97,7 +111,7 @@
   </div>
 </div>
 
-<div id="sequence-modal" class="modal fade" tabindex="-1" role="dialog">
+<div id="start-sequence-modal" class="modal fade" tabindex="-1" role="dialog">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -111,6 +125,24 @@
         <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
         <button id="start-sequence-ok" type="button" data-dismiss="modal" class="btn btn-primary">Ok</button>
       </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+    </div>
+  </div>
+</div>
+
+<div id="stop-sequence-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Maischeverlauf stoppen</h4>
+      </div>
+      <div class="modal-body">
+        <p>Möchtest du den  Maischeverlauf stoppen?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+        <button id="stop-sequence-ok" type="button" data-dismiss="modal" class="btn btn-primary">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>

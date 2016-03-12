@@ -142,6 +142,7 @@ def index():
 def tempctrl_settings():
     tempctrl_settings = db.session.query(TempCtrlSettings).first()
     form = TempForm(request.form, obj=tempctrl_settings)
+    form.setpoint.data = tempctrl.setpoint
 
     if form.validate_on_submit():
         form.populate_obj(tempctrl_settings)
@@ -241,6 +242,12 @@ def delete_step(step_id):
         step.order = i
     db.session.commit()
     return jsonify({'status': 'OK'})
+
+
+@app.route('/data')
+def measurement_data():
+    return render_template('data.html', processdata=get_processdata(),
+        graph_data=data)
 
 
 @socketio.on('enable_tempctrl')

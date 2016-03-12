@@ -16,7 +16,6 @@
 
 {% block script %}
   <script>
-
     var refresh_field_states = function(mode) {
       $manual_power = $('.manual_power');
       $power = $('.field-power');
@@ -78,7 +77,6 @@
       // reset button
       $('#reset').click(function(event) {
         event.preventDefault();
-        console.log('click');
         socket.emit('reset_tempctrl');
       });
 

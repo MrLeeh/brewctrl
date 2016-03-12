@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% from 'navbar.html' import navbar %}
+
+{% set title = 'Messdaten' %}
+
+{% block navbar %}
+  {{ navbar(processdata.active) }}
+{% endblock %}
+
+{% block style %}
+{% endblock %}
+
+{% block script %}
+  <script src="/static/plotly.min.js"></script>
+  <script>
+    var curent_data = null;
+    var data = {
+      'time': [],
+      'temp': [],
+      'setpoint': [],
+      'power': []
+    };
+
+    $(document).ready(function() {
+
+      // Socket data
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+      // diagram init
+      var graph = $('#graph').get(0);
+      var graph_data = {{ graph_data | tojson }}
+
+      data.time = graph_data.time;
+      data.temp = graph_data.temp;
+      data.setpoint = graph_data.temp_setpoint;
+      data.power = graph_data.power;
+
+      var trace_temp = {
+        x: data.time,
+        y: data.temp,
+        name: "Temperatur"
+      };
+
+      var trace_setpoint = {
+        x: data.time,
+        y: data.setpoint,
+        name: "Sollwert"
+      };
+
+      var trace_power = {
+        x: data.time,
+        y: data.power,
+        opacity: 0.3,
+        name: "Heizleistung"
+      };
+
+      // init plot
+      var layout = {
+        margin: {
+            l: 60,
+            r: 0,
+            b: 50,
+            t: 30,
+            pad: 4
+        },
+        height: 500,
+        yaxis: {
+          title: '°C',
+          range: [0, 100]
+        },
+        legend: {
+          x: 0.02,
+          y: 1.02,
+          traceorder: 'normal',
+          font: {
+            family: 'sans-serif',
+            size: 12,
+            color: '#000'
+          },
+          bordercolor: '#FFFFFF',
+          borderwidth: 2
+        }
+      }
+
+      Plotly.plot(
+        graph,
+        [trace_temp, trace_setpoint, trace_power],
+        layout
+      );
+
+      socket.on('process_data', function(curr_data) {
+        current_data = curr_data;
+        data.time.push(curr_data.time);
+        data.temp.push(curr_data.temp);
+        data.setpoint.push(curr_data.temp_setpoint);
+        data.power.push(curr_data.power)
+        Plotly.redraw(graph);
+
+      });
+    });
+  </script>
+{% endblock %}
+
+{% block main %}
+  <legend>{{ title }}</legend>
+  <div id="graph"></div>
+{% endblock %}
+
