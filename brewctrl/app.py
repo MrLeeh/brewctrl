@@ -25,7 +25,7 @@ app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-from .models import TempCtrl as TempCtrlSettings, Step
+from .models import TempCtrl as TempCtrlSettings, Step, ProcessData
 
 # temperature controller
 from .control import TempController
@@ -39,23 +39,16 @@ if tempctrl_settings is None:
 tempctrl = TempController()
 tempctrl.load_settings()
 
-data = dict(
-    time=[],
-    temp=[],
-    temp_setpoint=[],
-    power=[]
-)
-
 # sequence object
 from .sequence import Sequence
 sequence = Sequence()
 
 
-def get_processdata():
+def get_processdata(time=datetime.now()):
     processdata = {
         'temp': tempctrl.temp,
         'temp_setpoint': tempctrl.setpoint,
-        'time': str(datetime.now()),
+        'time': str(time),
         'state': tempctrl.state,
         'active': tempctrl.active,
         'power': tempctrl.power,
@@ -95,11 +88,15 @@ def background_thread():
 
     # process temperature controller
     tempctrl.process(cur_time)
-    processdata = get_processdata()
-    data['time'].append(processdata['time'])
-    data['temp'].append(processdata['temp'])
-    data['temp_setpoint'].append(processdata['temp_setpoint'])
-    data['power'].append(processdata['power'])
+    processdata = get_processdata(cur_time)
+
+    db.session.add(ProcessData(
+        time=cur_time,
+        temp=tempctrl.temp,
+        temp_setpoint=tempctrl.setpoint,
+        power=tempctrl.power
+    ))
+    db.session.commit()
 
     # process sequence controller
     sequence.process(tempctrl.temp, cur_time)
@@ -132,6 +129,7 @@ def index():
     if len(steps) == 0:
         steps = get_steps()
 
+    data = [(x. for x in ProcessData.query.all()]
     return render_template(
         'home/home.html', form=form, processdata=get_processdata(),
         graph_data=data, steps=steps
@@ -246,7 +244,8 @@ def delete_step(step_id):
 
 @app.route('/data')
 def measurement_data():
-    return render_template('data.html', processdata=get_processdata(),
+    data = [x.to_dict() for x in ProcessData.query.all()]
+    return render_template('data.html', processdata=get_processdata(datetime.now()),
         graph_data=data)
 
 

@@ -87,9 +87,18 @@ class ProcessData(db.Model):
 
     __tablename__ = 'processdata'
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime)
+    time = Column(DateTime)
     temp_setpoint = Column(Float())
     temp = Column(Float())
+    power = Column(Float())
+
+    def to_dict(self):
+        return {
+            'time': str(self.time),
+            'temp_setpoint': self.temp_setpoint,
+            'temp': self.temp,
+            'power': self.power
+        }
 
 
 if __name__ == '__main__':

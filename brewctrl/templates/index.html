@@ -13,7 +13,7 @@
       // this is specially important when using the global namespace
       var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
 
-      var graph = {{graphJSON | safe}};
+      var graph = {{ graphJSON | safe }};
       Plotly.plot('graph', graph.data, graph.layout);
 
       document.getElementById('nav_home').className="active"
