@@ -74,7 +74,7 @@ def read_temp():
 
 def set_output(pin: int, state: bool):
     os.system('gpio -g write {pin} {state}'.format(
-        pin=HEATER_PIN, state=state)
+        pin=pin, state=state)
     )
 
 
@@ -108,11 +108,6 @@ class PWM_DC:
         on_time = self.in_pct / 100.0 * self.duty_cycle
         self.out = False if in_pct == 0 else dt <= on_time
         return self.out
-
-
-class Output:
-    def __init__(self, pinnr):
-
 
 
 class TempController:

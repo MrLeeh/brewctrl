@@ -28,7 +28,7 @@ socketio = SocketIO(app)
 from .models import TempCtrl as TempCtrlSettings, Step
 
 # temperature controller
-from .control import TempController
+from .control import TempController, set_mixer_output 
 tempctrl_settings = db.session.query(TempCtrlSettings).first()
 
 if tempctrl_settings is None:
@@ -254,6 +254,12 @@ def measurement_data():
 def handle_json(json):
     enable = json['data']
     tempctrl.active = enable
+
+
+@socketio.on('enable_mixer')
+def handle_enable_mixer(json):
+    enable = json['data']
+    set_mixer_output(enable)
 
 
 @socketio.on('reset_tempctrl')
