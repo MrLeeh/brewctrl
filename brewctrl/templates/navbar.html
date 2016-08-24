@@ -15,6 +15,13 @@
       socket.emit('enable_tempctrl', {'data': active});
     });
 
+    $('#nav-btn-mixer-active').click(function() {
+      $(this).toggleClass('btn-success');
+
+      var active = $(this).hasClass('btn-success');
+      socket.emit('enable_mixer', {'data': active});
+    })
+
     socket.on('process_data', function(data) {
       var datetime = data.time.split(' ');
       var date = datetime[0].split('-');
@@ -55,6 +62,8 @@
   </li>
 
   <li><button id="nav-btn-tempctrl-active" class="btn navbar-btn">Temperaturregler</button></li>
+
+  <li><button id="nav-btn-mixer-active" class="btn navbar-btn">Rührwerk</button></li>
 </ul>
 <ul class="nav navbar-nav navbar-right">
   <li><a id="nav-clock">Uhrzeit</a></li>
