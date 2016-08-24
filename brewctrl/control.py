@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 control.py,
 
@@ -20,6 +18,10 @@ from .models import TempCtrl
 # Hardware configuration
 TEMPSENSOR = '28*'
 HEATER_PIN = 24
+MIXER_PIN = 23
+
+STATE_HIGH = 1
+STATE_LOW = 0
 
 MODE_AUTO = 'auto'
 MODE_MANUAL = 'manual'
@@ -34,6 +36,7 @@ simulation_mode = False
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
 os.system('gpio export {pin} out'.format(pin=HEATER_PIN))
+os.system('gpio export {pin} out'.format(pin=MIXER_PIN))
 
 base_dir = '/sys/bus/w1/devices/'
 try:
@@ -64,15 +67,23 @@ def read_temp():
             lines = read_temp_raw()
         equals_pos = lines[1].find('t=')
         if equals_pos != -1:
-            temp_string = lines[1][equals_pos+2:]
+            temp_string = lines[1][equals_pos + 2:]
             temp_c = float(temp_string) / 1000.0
             return temp_c
 
 
-def set_heater_output(val: bool):
+def set_output(pin: int, state: bool):
     os.system('gpio -g write {pin} {state}'.format(
-        pin=HEATER_PIN, state=1 if val else 0
-    ))
+        pin=HEATER_PIN, state=state)
+    )
+
+
+def set_heater_output(val: bool):
+    return set_output(pin=HEATER_PIN, state=(1 if val else 0))
+
+
+def set_mixer_output(val: bool):
+    return set_output(pin=MIXER_PIN, state=(1 if val else 0))
 
 
 class PWM_DC:
@@ -97,6 +108,11 @@ class PWM_DC:
         on_time = self.in_pct / 100.0 * self.duty_cycle
         self.out = False if in_pct == 0 else dt <= on_time
         return self.out
+
+
+class Output:
+    def __init__(self, pinnr):
+
 
 
 class TempController:
