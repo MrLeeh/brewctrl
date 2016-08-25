@@ -5,6 +5,18 @@
 * @Last Modified time: 2016
 */
 
+.content {
+  margin-top: 60px;
+}
+
+.inline-pad {
+  padding-left: 10px;
+}
+
+.edit-controls {
+  margin: 1em 0;
+}
+
 div.suffix {
   width: 60px;
 }
