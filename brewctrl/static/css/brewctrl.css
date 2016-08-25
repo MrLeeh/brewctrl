@@ -8,3 +8,8 @@
 div.suffix {
   width: 60px;
 }
+
+.navbar-btn {
+  margin-right: 6px;
+  min-width: 160px;
+}
