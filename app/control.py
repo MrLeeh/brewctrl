@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 import random
 
-from .app import db
+from . import db
 from .models import TempCtrl
 
 # Hardware configuration

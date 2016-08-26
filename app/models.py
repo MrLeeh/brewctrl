@@ -7,19 +7,7 @@ licensed under the MIT license
 """
 from enum import Enum
 from datetime import timedelta
-
-from sqlalchemy import Column, DateTime, Integer, String, Text, Float
-
-from .app import db
-
-# Base = declarative_base()
-
-
-# class Receipe(Base):
-
-#     id = Column(Integer, primary_key=True)
-#     name = Column(String(255))
-#     description = Column(Text)
+from . import db
 
 
 class State(Enum):
@@ -33,12 +21,12 @@ class State(Enum):
 class Step(db.Model):
 
     __tablename__ = 'steps'
-    id = Column(Integer, primary_key=True)
-    order = Column(Integer())
-    name = Column(String(80))
-    setpoint = Column(Integer())
-    timer = Column(Integer())
-    comment = Column(Text())
+    id = db.Column(db.Integer, primary_key=True)
+    order = db.Column(db.Integer())
+    name = db.Column(db.String(80))
+    setpoint = db.Column(db.Integer())
+    timer = db.Column(db.Integer())
+    comment = db.Column(db.Text())
     state = State.INACTIVE
     start_time = None
     elapsed_time = timedelta()
@@ -74,22 +62,22 @@ class Step(db.Model):
 class TempCtrl(db.Model):
 
     __tablename__ = 'tempctrl'
-    id = Column(Integer, primary_key=True)
-    setpoint = Column(Float, default=50.0)
-    kp = Column(Float, default=10.0)
-    tn = Column(Float, default=180.0)
-    mode = Column(String(80), default='auto')
-    duty_cycle = Column(Float, default=60.0)
-    manual_power = Column(Float, default=50.0)
+    id = db.Column(db.Integer, primary_key=True)
+    setpoint = db.Column(db.Float, default=50.0)
+    kp = db.Column(db.Float, default=10.0)
+    tn = db.Column(db.Float, default=180.0)
+    mode = db.Column(db.String(80), default='auto')
+    duty_cycle = db.Column(db.Float, default=60.0)
+    manual_power = db.Column(db.Float, default=50.0)
 
 
 class ProcessData(db.Model):
 
     __tablename__ = 'processdata'
-    id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime)
-    temp_setpoint = Column(Float())
-    temp = Column(Float())
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime)
+    temp_setpoint = db.Column(db.Float())
+    temp = db.Column(db.Float())
 
 
 if __name__ == '__main__':
