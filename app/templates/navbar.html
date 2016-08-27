@@ -28,6 +28,10 @@
       socket.emit('enable_mixer', {'data': active});
     })
 
+    $('#shutdownButton').click(function() {
+      socket.emit('shutdown');
+    });
+
     socket.on('process_data', function(data) {
       var datetime = data.datetime.split(' ');
       var date = datetime[0].split('-');
@@ -66,13 +70,33 @@
       <li id="nav-tempctrl"><a href="">Temperaturregelung</a></li>
     </ul>
   </li>
-
   <li><button id="nav-btn-tempctrl-active" class="btn navbar-btn">Temperaturregler</button></li>
-
   <li><button id="nav-btn-mixer-active" class="btn navbar-btn">Rührwerk</button></li>
 </ul>
+
 <ul class="nav navbar-nav navbar-right">
   <li><a id="nav-clock">Uhrzeit</a></li>
+  <li><a href="" data-toggle="modal" data-target="#shutdownDialog"><span class="glyphicon glyphicon-off"></span></a></li>
 </ul>
+
+<div id="shutdownDialog" class="modal fade" tabindex=-1 role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Brewctrl ausschalten</h4>
+      </div>
+      <div class="modal-body">
+        <p>Möchtest Du Brewctrl herunterfahren?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" id="shutdownButton">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endmacro %}

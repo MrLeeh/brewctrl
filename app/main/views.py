@@ -1,10 +1,11 @@
+import os
 import logging
 
 from . import main
 from flask import request, render_template
 from .forms import MainForm
 from .. import socketio
-from ..control import new_processdata, tempcontroller, mixer
+from ..control import new_processdata, tempcontroller, mixer, shutdown
 from ..models import ProcessData
 
 
@@ -57,3 +58,9 @@ def handle_enable_tempctrl(json):
 def handle_enable_mixer(json):
     enabled = json['data']
     mixer.enabled = enabled
+
+
+@socketio.on('shutdown')
+def handle_shutdown():
+    shutdown()
+

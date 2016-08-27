@@ -93,6 +93,12 @@ def set_mixer_output(val: bool):
     return set_output(pin=MIXER_PIN, state=(1 if val else 0))
 
 
+def shutdown():
+   logger.debug('system is shutting down')
+   if not simulation_mode:
+       os.system('shutdown halt')
+
+
 class PWM_DC:
 
     def __init__(self):
