@@ -118,8 +118,10 @@ class PWM_DC:
 
 
 class TempController:
+    """
+        Temperature controller
 
-    """ Temperature controller """
+    """
 
     def __init__(self, parent=None):
         self.pwm = PWM_DC()
@@ -203,9 +205,28 @@ class TempController:
     def temp(self):
         return self._temp
 
+    # enabled property
+    @property
+    def enabled(self):
+        """
+        True if temperature controller is switched on
+
+        """
+        return self.active
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        logger.debug('temperature controller {}'.format(
+            'enabled' if value else 'disabled'))
+        self.active = value
+
     # heater_enabled property
     @property
     def heater_enabled(self):
+        """
+        True if output for heating is currently switched on.
+
+        """
         return self._heater_enabled
 
     @heater_enabled.setter
@@ -217,6 +238,10 @@ class TempController:
     # duty cycle
     @property
     def duty_cycle(self):
+        """
+        Duty Cycle for heating PWM in seconds
+
+        """
         return self.pwm.duty_cycle
 
     @duty_cycle.setter
@@ -238,11 +263,15 @@ class Mixer:
 
     @property
     def enabled(self):
+        """
+        True if the mixer is currently switched on
+
+        """
         return self._enabled
 
     @enabled.setter
     def enabled(self, value: bool):
-        logger.debug('Mixer {}'.format('enabled' if value else 'disabled'))
+        logger.debug('mixer {}'.format('enabled' if value else 'disabled'))
         if not simulation_mode:
             set_mixer_output(value)
         self._enabled = value
@@ -261,6 +290,11 @@ def init_control(app):
             # init the temperature controller
             tempcontroller.load_settings()
 
+            # clear unsaved process_data
+            for p in ProcessData.query.filter(ProcessData.brewjob == None).all():
+                db.session.delete(p)
+            db.session.commit()
+
             # init background thread
             t = Timer(app.config['REFRESH_TIME'], background_thread, [app])
             t.daemon = True
@@ -278,6 +312,7 @@ def background_thread(app):
     t.start()
 
     with app.app_context():
+        tempcontroller.process(actual_time)
         process_data = ProcessData()
         process_data.datetime = actual_time
         process_data.temp_setpoint = tempcontroller.setpoint

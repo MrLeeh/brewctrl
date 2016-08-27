@@ -47,6 +47,12 @@ def index():
     )
 
 
+@socketio.on('enable_tempctrl')
+def handle_enable_tempctrl(json):
+   enabled = json['data']
+   tempcontroller.enabled = enabled
+
+
 @socketio.on('enable_mixer')
 def handle_enable_mixer(json):
     enabled = json['data']

@@ -81,3 +81,7 @@ progress.vertical {
 #overviewPanel {
   width: 290px;
 }
+
+.navbar-btn {
+  margin-right: 6px;
+}

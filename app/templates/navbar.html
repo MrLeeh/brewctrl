@@ -3,14 +3,10 @@
 <script>
   $(document).ready(function() {
     var socket = io.connect('http://' + document.domain + ':' + location.port);
-    console.log("{{ mixer_active }}");
 
+    // Tempctrl active
     if ("{{ tempctrl_active }}" == "True") {
       $('#nav-btn-tempctrl-active').addClass('btn-success');
-    }
-
-    if ("{{ mixer_active }}" == "True") {
-      $('#nav-btn-mixer-active').addClass('btn-success');
     }
 
     $('#nav-btn-tempctrl-active').click(function() {
@@ -19,6 +15,11 @@
       var active = $(this).hasClass('btn-success');
       socket.emit('enable_tempctrl', {'data': active});
     });
+
+    // Mixer active
+    if ("{{ mixer_active }}" == "True") {
+      $('#nav-btn-mixer-active').addClass('btn-success');
+    }
 
     $('#nav-btn-mixer-active').click(function() {
       $(this).toggleClass('btn-success');
