@@ -6,7 +6,7 @@ licensed under the MIT license
 
 """
 from enum import Enum
-from datetime import timedelta
+from datetime import timedelta, datetime
 from . import db
 import json
 
@@ -15,7 +15,10 @@ class JsonifyMixin:
     def jsonify(self):
         d = {}
         for column in self.__table__.columns:
-            d[column.name] = str(getattr(self, column.name))
+            val = getattr(self, column.name)
+            if isinstance(val, datetime):
+                val = str(val)
+            d[column.name] = val
         return d
 
 

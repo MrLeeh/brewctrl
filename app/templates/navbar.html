@@ -1,11 +1,16 @@
-{% macro navbar(tempctrl_active) %}
+{% macro navbar(tempctrl_active, mixer_active) %}
 
 <script>
   $(document).ready(function() {
     var socket = io.connect('http://' + document.domain + ':' + location.port);
+    console.log("{{ mixer_active }}");
 
     if ("{{ tempctrl_active }}" == "True") {
       $('#nav-btn-tempctrl-active').addClass('btn-success');
+    }
+
+    if ("{{ mixer_active }}" == "True") {
+      $('#nav-btn-mixer-active').addClass('btn-success');
     }
 
     $('#nav-btn-tempctrl-active').click(function() {
@@ -23,7 +28,7 @@
     })
 
     socket.on('process_data', function(data) {
-      var datetime = data.time.split(' ');
+      var datetime = data.datetime.split(' ');
       var date = datetime[0].split('-');
       date = date[2] + '.' + date[1] + '.' + date[0];
       var time = datetime[1].split('.')[0];

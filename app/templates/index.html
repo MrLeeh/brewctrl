@@ -2,10 +2,8 @@
 {% from 'navbar.html' import navbar %}
 {% from 'common.html' import decimal_field_vertical %}
 
-{% set title = 'Startseite' %}
-
 {% block navbar %}
-{{ navbar(processdata.active) }}
+{{ navbar(processdata.tempctrl_active, processdata.mixer_enabled) }}
 {% endblock %}
 
 {% block script %}
@@ -40,7 +38,7 @@
     var socket = io.connect('http://' + document.domain + ':' + location.port);
 
     // diagram init
-    var graph = $('#graph').get(0);
+    var graph = $('#trendDiv').get(0);
     var graph_data = {{ graph_data | tojson }}
 
     data.time = graph_data.time;
@@ -112,21 +110,21 @@
       current_data = curr_data;
 
       // Add data to graph
-      data.time.push(curr_data.time);
-      data.temp.push(curr_data.temp);
+      data.time.push(curr_data.datetime);
+      data.temp.push(curr_data.temp_actual);
       data.setpoint.push(curr_data.temp_setpoint);
-      data.power.push(curr_data.power)
+      data.power.push(curr_data.tempctrl_power)
 
       Plotly.redraw(graph);
 
       // Show current Temp in gauge
-      $('#power').text(curr_data.power.toFixed(0) + "%")
-      $('#temp').text(curr_data.temp.toFixed(1) + "°C")
-      $('#gauge').jqxLinearGauge('value', curr_data.temp);
+      $('#power').text(curr_data.tempctrl_power.toFixed(0) + "%")
+      $('#temp').text(curr_data.temp_actual.toFixed(1) + "°C")
+      $('#gauge').jqxLinearGauge('value', curr_data.temp_actual);
 
-      if (curr_data.sequence.step_changed) {
-        $('input#setpoint').val(current_data.temp_setpoint);
-      }
+      // if (curr_data.sequence.step_changed) {
+      //   $('input#setpoint').val(current_data.temp_setpoint);
+      // }
     });
 
     // reset graph button
@@ -182,15 +180,6 @@
       $('#gauge').css('top', 0 + 'px');
       $('#gauge').css('left', width + 'px');
 
-      // position of power label
-      $('#power').css('top', (height / 1.8) + 'px');
-      $('#power').css('left', (width / 3.0) + 'px');
-
-      // position of temp label
-      $('#temp').css('top', (height / 2.8) + 'px');
-      $('#temp').css('left', (width / 3.0) + 'px');
-
-
     }).each(function() {
         if(this.complete) {
           $(this).load();
@@ -203,64 +192,40 @@
 
 
 {% block main %}
-<legend>{{ title }}</legend>
 <div class="row">
-  <div class="col-md-12">
-    <div class="panel panel-primary">
-      <div class="panel-heading" data-toggle="collapse" data-target="#collapse-overview">
-        <h4 class="panel-title">
-          <a data-toggle="collapse" href="#collapse-overview">Überblick</a>
-        </h4>
-      </div>
-      <div id="collapse-overview" class="panel-collapse collapse in">
-        <div class="panel-body" id="panel-overview">
-          <div class="col-sm-4">
-            <div class="row">
-              <form class="form" method="post">
-                {{ form.hidden_tag() }}
-                {{ decimal_field_vertical(form.setpoint, '°C') }}
-              </form>
-            </div>
-            <div class="row">
-              <div style="position: relative">
-                <img id="img-animation" class="img-responsive image" src="static/images/einkocher.jpg"/>
-                <div id="gauge" class="gauge"></div>
-                <div id="power" class="power"></div>
-                <div id="temp" class="temp"></div>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-8">
-            <div class="col-sm-11">
-              <div id="graph"></div>
-            </div>
-            <div class="col-sm-1">
-              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                <span class="glyphicon glyphicon-menu-hamburger"></span>
-              </button>
-              <ul class="dropdown-menu">
-                <li><a href="#" id="btn-reset-graph">Reset</a></li>
-              </ul>
-            </div>
+  <div id="overviewPanel" class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        Überblick
+      </h4>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-sm-12">
+          <form class="form" method="post">
+            {{ form.hidden_tag() }}
+            {{ decimal_field_vertical(form.setpoint, '°C') }}
+          </form>
+        </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div style="position: relative">
+            <img id="img-animation" class="img-responsive image" src="static/images/einkocher.jpg"/>
+            <div id="gauge" class="gauge"></div>
+            <div id="power" class="power"></div>
+            <div id="temp" class="temp"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
-
-<div class="row">
-  <div class="col-md-12">
-    <div class="panel panel-primary">
-      <div class="panel-heading" data-toggle="collapse" data-target="#collapse-graph">
-        <h4 class="panel-title">
-          <a data-toggle="collapse" href="#collapse-graph">Ablauf</a>
-        </h4>
-      </div>
-      <div id="collapse-graph" class="panel-collapse collapse in">
-        <div class="panel-body" id="panel-graph">
-        </div>
-      </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title"> Verlauf </h4>
+    </div>
+    <div class="panel-body" id="trendPanel">
+      <div id="trendDiv"></div>
     </div>
   </div>
 </div>

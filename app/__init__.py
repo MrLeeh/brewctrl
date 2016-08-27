@@ -8,7 +8,11 @@ from config import config
 
 logger = logging.getLogger(__name__)
 bootstrap = Bootstrap()
+
+import eventlet
+eventlet.monkey_patch()
 socketio = SocketIO()
+
 db = SQLAlchemy()
 
 

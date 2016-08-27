@@ -242,7 +242,9 @@ class Mixer:
 
     @enabled.setter
     def enabled(self, value: bool):
-        set_mixer_output(value)
+        logger.debug('Mixer {}'.format('enabled' if value else 'disabled'))
+        if not simulation_mode:
+            set_mixer_output(value)
         self._enabled = value
 
 
