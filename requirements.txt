@@ -1,8 +1,0 @@
-flask>=0.10
-flask-script
-flask-socketio
-flask-sqlalchemy
-flask-util-js
-plotly
-WTForms
-eventlet

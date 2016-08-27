@@ -1,0 +1,13 @@
+blinker
+flask
+flask-bootstrap
+flask-jsontools
+flask-migrate
+flask-script
+flask-socketio
+flask-sqlalchemy
+flask-util-js
+flask-wtf
+plotly
+WTForms
+eventlet

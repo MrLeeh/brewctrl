@@ -3,3 +3,6 @@ db_repository
 *.pyc
 .DS_Store
 venv
+*.sqlite
+.idea
+migrations

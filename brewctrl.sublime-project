@@ -5,13 +5,13 @@
 			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
 			"name": "Run Testserver",
 			"selector": "source.python",
-			"shell_cmd": "/Users/stefan/Documents/python/venvs/brewctrl/bin/python -u \"$project_path/manage.py\" run"
+			"shell_cmd": "/Users/stefan/Documents/python/projects/flask/brewctrl/venv/bin/python -u \"$project_path/manage.py\" run"
 		},
 		{
 			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
 			"name": "Anaconda Python Builder",
 			"selector": "source.python",
-			"shell_cmd": "\"python\" -u \"$file\""
+			"shell_cmd": "\"/Users/stefan/Documents/python/projects/flask/brewctrl/venv/bin/python\" -u \"$file\""
 		}
 	],
 	"folders":
@@ -20,5 +20,8 @@
 			"path": "."
 		}
 	],
-	"python_interpreter": "/Users/stefan/Documents/python/venvs/brewctrl/bin/python"
+	"settings":
+	{
+		"python_interpreter": "~/Documents/python/projects/flask/brewctrl/venv/bin/python"
+	}
 }
