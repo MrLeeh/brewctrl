@@ -1,12 +1,10 @@
 import logging
 
-from sqlalchemy.exc import OperationalError
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from config import config
-
 
 logger = logging.getLogger(__name__)
 bootstrap = Bootstrap()
@@ -23,8 +21,6 @@ def create_app(config_name):
     socketio.init_app(app)
     db.init_app(app)
 
-    from .models import TempCtrl as TempCtrlSettings
-
     # init logger
     logger = logging.getLogger('brewctrl')
     logger.setLevel(app.config['LOGGING_LEVEL'])
@@ -39,16 +35,9 @@ def create_app(config_name):
     # add ch to logger
     logger.addHandler(ch)
 
-    # init tempctrl settings
-    try:
-        with app.app_context():
-            tempctrl_settings = TempCtrlSettings.query.first()
-            if tempctrl_settings is None:
-                tempctrl_settings = TempCtrlSettings()
-                db.session.add(tempctrl_settings)
-                db.session.commit()
-    except OperationalError as e:
-        logger.exception(e)
+    # init control
+    from .control import init_control
+    init_control(app)
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)

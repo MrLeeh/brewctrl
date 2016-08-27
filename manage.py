@@ -9,10 +9,10 @@ licensed under the MIT license
 
 import os
 from app import create_app, db
-from app.models import TempCtrl
+from app.models import TempCtrlSettings, ProcessData
+from app.control import tempcontroller
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
-
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 manager = Manager(app)
@@ -20,7 +20,8 @@ migrate = Migrate(app, db)
 
 
 def make_shell_context():
-    return dict(app=app, db=db, TempCtrl=TempCtrl)
+    return dict(app=app, db=db, TempCtrlSettings=TempCtrlSettings,
+                tempcontroller=tempcontroller, ProcessData=ProcessData)
 
 
 manager.add_command('shell', Shell(make_context=make_shell_context))
@@ -28,7 +29,7 @@ manager.add_command('db', MigrateCommand)
 
 
 @manager.command
-def run(host='0.0.0.0', port=5000, user_reloader=True):
+def run(host='0.0.0.0', port=5000, user_reloader=False):
     """
     Run the Flask development server with websocket support.
 
@@ -39,7 +40,9 @@ def run(host='0.0.0.0', port=5000, user_reloader=True):
         app,
         host=host,
         port=port,
+        use_reloader=user_reloader
     )
+
 
 @manager.command
 def test():

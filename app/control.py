@@ -8,12 +8,15 @@ licensed under the MIT license
 import os
 import logging
 import glob
-from datetime import datetime
 import time
-import random
+from threading import Timer
+from datetime import datetime
 
-from . import db
-from .models import TempCtrl
+import blinker
+from sqlalchemy.exc import OperationalError
+
+from . import db, socketio
+from .models import TempCtrlSettings, ProcessData, init_db
 
 # Hardware configuration
 TEMPSENSOR = '28*'
@@ -39,6 +42,7 @@ os.system('gpio export {pin} out'.format(pin=HEATER_PIN))
 os.system('gpio export {pin} out'.format(pin=MIXER_PIN))
 
 base_dir = '/sys/bus/w1/devices/'
+
 try:
     device_folder = glob.glob(base_dir + TEMPSENSOR)[0]
     device_file = device_folder + '/w1_slave'
@@ -47,6 +51,9 @@ except IndexError:
     simulation_mode = True
     from .simulation import SimulationModel
     simulation_model = SimulationModel()
+
+
+new_processdata = blinker.signal('new processdata')
 
 
 def read_temp_raw():
@@ -132,6 +139,7 @@ class TempController:
         self.active = False
         self.reset = False
         self.output = False
+        self.power = 0.0
 
     def process(self, cur_time=datetime.utcnow()):
 
@@ -181,7 +189,7 @@ class TempController:
         self._prev_time = cur_time
 
     def load_settings(self):
-        settings = db.session.query(TempCtrl).first()
+        settings = db.session.query(TempCtrlSettings).first()
         if settings is None:
             logger.error('No settings found for temperature controller')
             return
@@ -222,6 +230,65 @@ class TempController:
             return 'Heizung ein'
         else:
             return 'Heizung aus'
+
+
+class Mixer:
+    def __init__(self):
+        self._enabled = False
+
+    @property
+    def enabled(self):
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        set_mixer_output(value)
+        self._enabled = value
+
+
+tempcontroller = TempController()
+mixer = Mixer()
+
+
+def init_control(app):
+    # load settings for temperature controller or init them
+    try:
+        with app.app_context():
+            init_db()
+
+            # init the temperature controller
+            tempcontroller.load_settings()
+
+            # init background thread
+            t = Timer(app.config['REFRESH_TIME'], background_thread, [app])
+            t.daemon = True
+            t.start()
+
+    except OperationalError as e:
+        logger.error(e)
+
+
+def background_thread(app):
+    actual_time = datetime.now()
+
+    t = Timer(app.config['REFRESH_TIME'], background_thread, args=[app])
+    t.daemon = True
+    t.start()
+
+    with app.app_context():
+        process_data = ProcessData()
+        process_data.datetime = actual_time
+        process_data.temp_setpoint = tempcontroller.setpoint
+        process_data.temp_actual = tempcontroller.temp
+        process_data.tempctrl_active = tempcontroller.active
+        process_data.tempctrl_power = tempcontroller.power
+        process_data.tempctrl_output = tempcontroller.output
+        process_data.heater_enabled = tempcontroller.heater_enabled
+        process_data.mixer_enabled = mixer.enabled
+        db.session.add(process_data)
+        db.session.commit()
+        new_processdata.send(process_data.jsonify())
+
 
 if __name__ == '__main__':
     print(read_temp())

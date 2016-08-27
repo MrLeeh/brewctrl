@@ -8,6 +8,15 @@ licensed under the MIT license
 from enum import Enum
 from datetime import timedelta
 from . import db
+import json
+
+
+class JsonifyMixin:
+    def jsonify(self):
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = str(getattr(self, column.name))
+        return d
 
 
 class State(Enum):
@@ -59,9 +68,9 @@ class Step(db.Model):
         return self._elapsed_time_str
 
 
-class TempCtrl(db.Model):
+class TempCtrlSettings(db.Model):
 
-    __tablename__ = 'tempctrl'
+    __tablename__ = 'tempctrl_settings'
     id = db.Column(db.Integer, primary_key=True)
     setpoint = db.Column(db.Float, default=50.0)
     kp = db.Column(db.Float, default=10.0)
@@ -71,13 +80,41 @@ class TempCtrl(db.Model):
     manual_power = db.Column(db.Float, default=50.0)
 
 
-class ProcessData(db.Model):
+class ProcessData(db.Model, JsonifyMixin):
 
     __tablename__ = 'processdata'
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime)
+    datetime = db.Column(db.DateTime, nullable=False)
     temp_setpoint = db.Column(db.Float())
-    temp = db.Column(db.Float())
+    temp_actual = db.Column(db.Float())
+    tempctrl_active = db.Column(db.Boolean)
+    tempctrl_power = db.Column(db.Float)
+    tempctrl_output = db.Column(db.Boolean)
+    heater_enabled = db.Column(db.Boolean)
+    mixer_enabled = db.Column(db.Boolean)
+
+    brewjob_id = db.Column(db.Integer, db.ForeignKey('brewjob.id'))
+    brewjob = db.relationship('BrewJob', backref='processdata')
+
+    def __repr__(self):
+        return '<ProcessData object id={id} ' \
+               'datetime={datetime}>'.format(id=self.id or '',
+                                             datetime=self.datetime or '')
+
+
+class BrewJob(db.Model):
+    __tablename__ = 'brewjob'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64))
+
+
+def init_db():
+    # init temp controller settings
+    tempctrl_settings = TempCtrlSettings.query.first()
+    if tempctrl_settings is None:
+        tempctrl_settings = TempCtrlSettings()
+        db.session.add(tempctrl_settings)
+        db.session.commit()
 
 
 if __name__ == '__main__':
