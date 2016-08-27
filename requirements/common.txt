@@ -1,7 +1,6 @@
 blinker
 flask
 flask-bootstrap
-flask-jsontools
 flask-migrate
 flask-script
 flask-socketio

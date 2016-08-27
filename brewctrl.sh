@@ -1,2 +1,6 @@
-#!/bin/sh
-/usr/bin/python3 /home/pi/python/brewctrl/manage.py run
+#!/bin/bash
+cd /home/pi/python/brewctrl
+source venv/bin/activate
+
+export FLASK_CONFIG=development
+exec python manage.py run
