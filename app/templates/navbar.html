@@ -1,10 +1,10 @@
-{% macro navbar(tempctrl_active, mixer_active) %}
+{% macro navbar(processdata) %}
 <script>
   $(document).ready(function() {
     var socket = io.connect('http://' + document.domain + ':' + location.port);
 
     // Tempctrl active
-    if ("{{ tempctrl_active }}" == "True") {
+    if ("{{ processdata.tempctrl_active }}" == "True") {
       $('#nav-btn-tempctrl-active').addClass('btn-success');
     }
 
@@ -16,7 +16,7 @@
     });
 
     // Mixer active
-    if ("{{ mixer_active }}" == "True") {
+    if ("{{ processdata.mixer_active }}" == "True") {
       $('#nav-btn-mixer-active').addClass('btn-success');
     }
 
@@ -42,13 +42,11 @@
   });
 </script>
 
-
-
 <ul class="nav navbar-nav navbar-left">
   <li class="drowdown">
     <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Braurezept<span class="caret"></span></a>
     <ul class="dropdown-menu">
-      <li id="newReceipeButton"><a href="">Neues Rezept erstellen...</a></li>
+      <li id="newReceipeButton"><a href="{{ url_for('main.create_receipe') }}">Neues Rezept erstellen...</a></li>
       <li role="separator" class="divider"></li>
       <li id="loadReceipeButton"><a href="">Rezept laden...</a></li>
       <li id="editReceipeButton"><a href="">Rezept bearbeiten...</a></li>

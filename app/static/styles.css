@@ -105,3 +105,7 @@ progress.vertical {
   background-color: #38b44a;
   border-color: #38b44a;
 }
+
+.navbar-brand {
+  padding-top: 0px;
+}

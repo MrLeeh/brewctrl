@@ -2,8 +2,8 @@ import os
 import logging
 
 from . import main
-from flask import request, render_template
-from .forms import MainForm
+from flask import request, render_template, redirect, url_for
+from .forms import MainForm, ReceipeForm
 from .. import socketio
 from ..control import new_processdata, tempcontroller, mixer, shutdown
 from ..models import ProcessData
@@ -47,6 +47,16 @@ def index():
         graph_data=graph_data
     )
 
+
+@main.route('/receipes/create', methods=['GET', 'POST'])
+def create_receipe():
+    form = ReceipeForm()
+
+    if form.validate_on_submit():
+        return redirect(url_for('main.index'))
+
+    return render_template('receipe/edit.html', form=form,
+                           processdata=actual_processdata)
 
 @socketio.on('enable_tempctrl')
 def handle_enable_tempctrl(json):

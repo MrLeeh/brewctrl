@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% from 'common.html' import edit_field %}
+{% from 'navbar.html' import navbar %}
+
+{% block navbar %}
+{{ navbar(processdata) }}
+{% endblock %}
+
+{% block script %}
+{% endblock %}
+
+{% block main %}
+  <form class="form" method="post">
+    {{ form.hidden_tag() }}
+    {{ edit_field(form.name) }}
+    <div class="row">
+      <div class="col-xs-12">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Schritt</th>
+              <th>Temperatur</th>
+              <th>Timer</th>
+              <th>Kommentar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for step in steps %}
+            <tr id="step{{ step.id }}">
+              <td>{{ step.name }}</td>
+              <td align="center">{{ "{:.0f} °C".format(step.setpoint) }}</td>
+              <td align="center">{{ "{} min".format(step.timer) }}</td>
+              <td align="left">{% if not step.comment %}-{% else %}{{ step.comment }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{ form.submit(class='btn') }} oder <a href="">Abbrechen</a>
+  </form>
+{% endblock %}
