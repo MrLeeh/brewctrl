@@ -73,6 +73,21 @@ progress.vertical {
   border: "5px solid black";
 }
 
+@media (max-width: 767px) {
+  .navbar-btn {
+    margin-left: 2%;
+    margin-right: 2%;
+    text-align: left;
+    width: 96%;
+  }
+  a#nav-clock {
+    display: none;
+  }
+  a#showShutdownDialogButton:after {
+    content: " Herunterfahren";
+  }
+}
+
 .panel-default {
   margin-left: 15px;
   margin-right: 15px;
@@ -84,4 +99,9 @@ progress.vertical {
 
 .navbar-btn {
   margin-right: 6px;
+}
+
+.btn-success:active, .btn-success:focus {
+  background-color: #38b44a;
+  border-color: #38b44a;
 }

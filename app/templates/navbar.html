@@ -1,5 +1,4 @@
 {% macro navbar(tempctrl_active, mixer_active) %}
-
 <script>
   $(document).ready(function() {
     var socket = io.connect('http://' + document.domain + ':' + location.port);
@@ -43,8 +42,18 @@
   });
 </script>
 
+
+
 <ul class="nav navbar-nav navbar-left">
-  <li id="nav_home"><a href="{{ url_for('main.index') }}">Home</a></li>
+  <li class="drowdown">
+    <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Braurezept<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li id="newReceipeButton"><a href="">Neues Rezept erstellen...</a></li>
+      <li role="separator" class="divider"></li>
+      <li id="loadReceipeButton"><a href="">Rezept laden...</a></li>
+      <li id="editReceipeButton"><a href="">Rezept bearbeiten...</a></li>
+    </ul>
+  </li>
 
   <li class="dropdown">
     <a id="nav-progress" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
@@ -62,41 +71,14 @@
       <li class="disabled"><a href="#">Aufzeichnung stoppen</a></li>
     </ul>
   </li>
-
-  <li class="drowdown">
-    <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Einstellungen<span class="caret"></span></a>
-    <ul class="dropdown-menu">
-      <li id="nav-edit-steps"><a href="">Schritte bearbeiten</a></li>
-      <li id="nav-tempctrl"><a href="">Temperaturregelung</a></li>
-    </ul>
-  </li>
+  <li role="separator" class="divider"></li>
   <li><button id="nav-btn-tempctrl-active" class="btn navbar-btn">Temperaturregler</button></li>
   <li><button id="nav-btn-mixer-active" class="btn navbar-btn">Rührwerk</button></li>
 </ul>
 
 <ul class="nav navbar-nav navbar-right">
   <li><a id="nav-clock">Uhrzeit</a></li>
-  <li><a href="" data-toggle="modal" data-target="#shutdownDialog"><span class="glyphicon glyphicon-off"></span></a></li>
+  <li><a id="showShutdownDialogButton" href="" data-toggle="modal" data-target="#shutdownDialog"><span class="glyphicon glyphicon-off"></span></a></li>
 </ul>
-
-<div id="shutdownDialog" class="modal fade" tabindex=-1 role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Brewctrl ausschalten</h4>
-      </div>
-      <div class="modal-body">
-        <p>Möchtest Du Brewctrl herunterfahren?</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
-        <button type="button" class="btn btn-primary" data-dismiss="modal" id="shutdownButton">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 {% endmacro %}

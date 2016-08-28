@@ -23,6 +23,8 @@
   };
 
   $(document).ready(function() {
+    var screen_width = window.innerWidth;
+
     // show setpoint ok and cancel button when user change setpoint
     $('#setpoint').keydown(function() {
       $('#setpoint-cancel').fadeIn('slow');
@@ -66,8 +68,34 @@
     };
 
     // init plot
+    var small_layout = {
+      margin: {
+        l: 30,
+        r: 0,
+        b: 20,
+        t: 0,
+        pad: 4
+      },
+      height: 200,
+      yaxis: {
+        title: '',
+        range: [0, 100]
+      },
+      legend: {
+        x: 0.02,
+        y: 1.02,
+        traceorder: 'normal',
+        font: {
+          family: 'sans-serif',
+          size: 12,
+          color: '#000'
+        },
+        bordercolor: '#FFFFFF',
+        borderwidth: 2
+      }
+    };
 
-    var layout = {
+    var large_layout = {
       margin: {
           l: 60,
           r: 0,
@@ -92,6 +120,13 @@
         bordercolor: '#FFFFFF',
         borderwidth: 2
       }
+    };
+
+    if (screen_width <= 767) {
+      layout = small_layout;
+    }
+    else {
+      layout = large_layout;
     };
 
     Plotly.plot(
