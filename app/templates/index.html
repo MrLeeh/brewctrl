@@ -156,6 +156,12 @@
       $('#power').text(curr_data.tempctrl_power.toFixed(0) + "%")
       $('#temp').text(curr_data.temp_actual.toFixed(1) + "°C")
       $('#gauge').jqxLinearGauge('value', curr_data.temp_actual);
+      if (curr_data.heater_enabled) {
+        $('#heaterStateLight').css('background-color', 'red');
+      }
+      else {
+        $('#heaterStateLight').css('background-color', 'darkgray');
+      }
 
       // if (curr_data.sequence.step_changed) {
       //   $('input#setpoint').val(current_data.temp_setpoint);
@@ -249,6 +255,7 @@
             <div id="gauge" class="gauge"></div>
             <div id="power" class="power"></div>
             <div id="temp" class="temp"></div>
+            <div id="heaterStateLight" title="Heizer ein/aus"></div>
           </div>
         </div>
       </div>

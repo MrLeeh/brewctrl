@@ -54,6 +54,17 @@ div.suffix {
   text-align: center;
 }
 
+#heaterStateLight {
+  width: 15px;
+  height: 15px;
+  border-radius: 7.5px;
+  background-color: white;
+  border: 1px solid darkgray;
+  position: absolute;
+  left: 95px;
+  top: 155px;
+}
+
 progress.vertical {
   position: relative;
   width: 20px;
