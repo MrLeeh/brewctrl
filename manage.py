@@ -10,7 +10,7 @@ import sys
 import eventlet
 import os
 from app import create_app, db
-from app.models import TempCtrlSettings, ProcessData, Step
+from app.models import TempCtrlSettings, ProcessData, Step, Receipe
 from app.control import tempcontroller
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
@@ -29,7 +29,7 @@ migrate = Migrate(app, db)
 def make_shell_context():
     return dict(app=app, db=db, TempCtrlSettings=TempCtrlSettings,
                 tempcontroller=tempcontroller, ProcessData=ProcessData,
-                Step=Step)
+                Step=Step, Receipe=Receipe)
 
 
 manager.add_command('shell', Shell(make_context=make_shell_context))

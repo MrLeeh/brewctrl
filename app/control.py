@@ -205,6 +205,13 @@ class TempController:
         attributes = ['setpoint', 'kp', 'tn', 'duty_cycle', 'mode', 'manual_power']
         for attr in attributes:
             setattr(self, attr, getattr(settings, attr))
+        logger.debug(
+            'loaded temp controller settings: kp={kp}, tn={tn}, dc={dc}'.format(
+                kp=settings.kp,
+                tn=settings.tn,
+                dc=settings.duty_cycle
+            )
+        )
 
     # temperature property
     @property

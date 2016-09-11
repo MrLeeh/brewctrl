@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from 'navbar.html' import navbar %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block navbar %}
+{{ navbar(processdata) }}
+{% endblock %}
+
+{% block main %}
+<legend>
+Einstellungen: Temperaturregler
+</legend>
+
+<form class="form" method="post" role="form">
+  {{ form.hidden_tag() }}
+  {{ wtf.form_field(form.kp) }}
+  {{ wtf.form_field(form.tn) }}
+  {{ wtf.form_field(form.duty_cycle) }}
+  {{ wtf.form_field(form.submit) }}
+   oder <a href="{{ url_for('main.index') }}">Abbrechen</a>
+</form>
+{% endblock %}

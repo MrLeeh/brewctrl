@@ -42,8 +42,10 @@ class Step(db.Model):
     order = db.Column(db.Integer())
     name = db.Column(db.String(80))
     setpoint = db.Column(db.Integer())
-    timer = db.Column(db.Integer())
+    duration = db.Column(db.Integer())
     comment = db.Column(db.Text())
+    enable_heater = db.Column(db.Boolean(), default=True)
+    enable_mixer = db.Column(db.Boolean(), default=True)
     state = State.INACTIVE
     start_time = None
     elapsed_time = timedelta()
@@ -51,8 +53,10 @@ class Step(db.Model):
     receipe = db.relationship('Receipe', backref='steps')
 
     def __repr__(self):
-        return '<{self.__class__.__name__}: {self.id}{self.name}>'.format(
-            self=self)
+        return '<Step object id:{id} name:{name}>'.format(
+            id=self.id or '',
+            name=self.name or ''
+        )
 
     @property
     def state_str(self):
