@@ -149,6 +149,12 @@ class TempController:
         self.output = False
         self.power = 0.0
 
+    def upper_limit(self):
+        return self.power >= MAX
+
+    def lower_limit(self):
+        return self.power <= MIN
+
     def process(self, cur_time=datetime.utcnow()):
 
         if self._prev_time is not None:
@@ -173,12 +179,15 @@ class TempController:
                     self.reset = False
                 else:
                     if not self.tn == 0:
-                        self._i += self._time_delta * self._temp_delta / self.tn
+                        delta_i = self._time_delta * self._temp_delta / self.tn
+                        if (    not (self.upper_limit() and delta_i > 0) and
+                                not(self.lower_limit() and delta_i < 0)):
+                            self._i += delta_i
+
                         self._i = max(min(self._i, MAX), MIN)
 
                 # output
                 self.power = self._p + self._i
-
             else:
                 self.power = self.manual_power
 
