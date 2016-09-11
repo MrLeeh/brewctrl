@@ -88,7 +88,7 @@ def get_steps():
 def background_thread():
     cur_time = datetime.now()
 
-    # restart timer
+    # restart duration
     t = Timer(REFRESH_TIME, background_thread)
     t.daemon = True
     t.start()

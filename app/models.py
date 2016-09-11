@@ -8,7 +8,6 @@ licensed under the MIT license
 from enum import Enum
 from datetime import timedelta, datetime
 from . import db
-import json
 
 
 class JsonifyMixin:
@@ -30,6 +29,12 @@ class State(Enum):
     SKIPPED = 4
 
 
+class Receipe(db.Model):
+    __tablename__ = 'receipes'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64))
+
+
 class Step(db.Model):
 
     __tablename__ = 'steps'
@@ -37,15 +42,21 @@ class Step(db.Model):
     order = db.Column(db.Integer())
     name = db.Column(db.String(80))
     setpoint = db.Column(db.Integer())
-    timer = db.Column(db.Integer())
+    duration = db.Column(db.Integer())
     comment = db.Column(db.Text())
+    enable_heater = db.Column(db.Boolean(), default=True)
+    enable_mixer = db.Column(db.Boolean(), default=True)
     state = State.INACTIVE
     start_time = None
     elapsed_time = timedelta()
+    receipe_id = db.Column(db.Integer, db.ForeignKey('receipes.id'))
+    receipe = db.relationship('Receipe', backref='steps')
 
     def __repr__(self):
-        return '<{self.__class__.__name__}: {self.id}{self.name}>'.format(
-            self=self)
+        return '<Step object id:{id} name:{name}>'.format(
+            id=self.id or '',
+            name=self.name or ''
+        )
 
     @property
     def state_str(self):

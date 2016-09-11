@@ -1,11 +1,10 @@
-{% macro navbar(tempctrl_active, mixer_active) %}
-
+{% macro navbar(processdata) %}
 <script>
   $(document).ready(function() {
     var socket = io.connect('http://' + document.domain + ':' + location.port);
 
     // Tempctrl active
-    if ("{{ tempctrl_active }}" == "True") {
+    if ("{{ processdata.tempctrl_active }}" == "True") {
       $('#nav-btn-tempctrl-active').addClass('btn-success');
     }
 
@@ -17,7 +16,7 @@
     });
 
     // Mixer active
-    if ("{{ mixer_active }}" == "True") {
+    if ("{{ processdata.mixer_active }}" == "True") {
       $('#nav-btn-mixer-active').addClass('btn-success');
     }
 
@@ -39,12 +38,33 @@
       var time = datetime[1].split('.')[0];
 
       $('#nav-clock').text(date + ' ' + time);
+
+      if (data.heater_enabled) {
+        $('#nav-btn-tempctrl-active').addClass('btn-success');
+      }
+      else {
+        $('#nav-btn-tempctrl-active').removeClass('btn-success');
+      }
+
+      if (data.mixer_enabled) {
+        $('#nav-btn-mixer-active').addClass('btn-success');
+      }
+      else {
+        $('#nav-btn-mixer-active').removeClass('btn-success');
+      }
     });
   });
 </script>
 
 <ul class="nav navbar-nav navbar-left">
-  <li id="nav_home"><a href="{{ url_for('main.index') }}">Home</a></li>
+  <li class="drowdown">
+    <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Braurezept<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li id="newReceipeButton"><a href="{{ url_for('main.create_receipe') }}">Neues Rezept erstellen...</a></li>
+      <li role="separator" class="divider"></li>
+      <li id="editReceipeButton"><a href="" data-toggle="modal" data-target="#openReceipeDialog">Rezept öffnen...</a></li>
+    </ul>
+  </li>
 
   <li class="dropdown">
     <a id="nav-progress" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
@@ -62,41 +82,23 @@
       <li class="disabled"><a href="#">Aufzeichnung stoppen</a></li>
     </ul>
   </li>
-
-  <li class="drowdown">
-    <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Einstellungen<span class="caret"></span></a>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
+      Einstellungen
+      <span class="caret"></span>
+    </a>
     <ul class="dropdown-menu">
-      <li id="nav-edit-steps"><a href="">Schritte bearbeiten</a></li>
-      <li id="nav-tempctrl"><a href="">Temperaturregelung</a></li>
+      <li><a href="{{ url_for('main.tempcontroller_settings') }}">Temperaturregler</a></li>
     </ul>
   </li>
+  <li role="separator" class="divider"></li>
   <li><button id="nav-btn-tempctrl-active" class="btn navbar-btn">Temperaturregler</button></li>
   <li><button id="nav-btn-mixer-active" class="btn navbar-btn">Rührwerk</button></li>
 </ul>
 
 <ul class="nav navbar-nav navbar-right">
   <li><a id="nav-clock">Uhrzeit</a></li>
-  <li><a href="" data-toggle="modal" data-target="#shutdownDialog"><span class="glyphicon glyphicon-off"></span></a></li>
+  <li><a id="showShutdownDialogButton" href="" data-toggle="modal" data-target="#shutdownDialog"><span class="glyphicon glyphicon-off"></span></a></li>
 </ul>
-
-<div id="shutdownDialog" class="modal fade" tabindex=-1 role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Brewctrl ausschalten</h4>
-      </div>
-      <div class="modal-body">
-        <p>Möchtest Du Brewctrl herunterfahren?</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
-        <button type="button" class="btn btn-primary" data-dismiss="modal" id="shutdownButton">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 {% endmacro %}
