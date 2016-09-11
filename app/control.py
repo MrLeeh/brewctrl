@@ -96,7 +96,7 @@ def set_mixer_output(val: bool):
 def shutdown():
    logger.debug('system is shutting down')
    if not simulation_mode:
-       os.system('shutdown halt')
+       os.system('sudo shutdown -a now')
 
 
 class PWM_DC:
