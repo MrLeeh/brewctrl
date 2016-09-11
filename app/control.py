@@ -202,7 +202,7 @@ class TempController:
             logger.error('No settings found for temperature controller')
             return
 
-        attributes = ['setpoint', 'kp', 'tn', 'duty_cycle', 'mode', 'manual_power']
+        attributes = ['kp', 'tn', 'duty_cycle']
         for attr in attributes:
             setattr(self, attr, getattr(settings, attr))
         logger.debug(
