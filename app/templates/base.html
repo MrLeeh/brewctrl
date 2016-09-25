@@ -20,6 +20,7 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
   <script type="text/javascript">
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
     $(document).ready(function() {
 
       // load receipes on opening dialog
@@ -37,7 +38,7 @@
       // open receipe
       $('#openReceipeButton').click(function() {
         receipe_id = $('#openReceipeDialog select').val()
-        location.href = '/receipes/edit/' + receipe_id;
+        location.href = $SCRIPT_ROOT + '/receipes/' + receipe_id;
       });
 
 

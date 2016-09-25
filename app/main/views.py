@@ -4,7 +4,7 @@ from itertools import islice
 
 from . import main
 from flask import request, render_template, redirect, url_for
-from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm
+from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm, StepForm
 from .. import socketio, db
 from ..control import new_processdata, tempcontroller, mixer, shutdown
 from ..models import ProcessData, Receipe, Step, TempCtrlSettings
@@ -69,13 +69,19 @@ def create_receipe():
 
         return redirect(url_for('main.index'))
 
-    return render_template('receipe/add.html', form=form,
+    return render_template('receipes/add.html', form=form,
                            receipe=receipe,
                            processdata=actual_processdata)
 
 
-@main.route('/receipes/edit/<receipe_id>', methods=['GET', 'POST'])
+@main.route('/receipes/<receipe_id>', methods=['GET', 'POST'])
 def edit_receipe(receipe_id):
+
+    if 'StepForm' in request.form:
+        # redirect for adding a new step, use HTTP status code 307 to preserve
+        # the POST method (https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#3xx_Redirection)
+        return redirect(url_for('main.create_step', receipe_id=receipe_id), code=307)
+
     receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
     form = ReceipeForm(obj=receipe)
 
@@ -84,8 +90,28 @@ def edit_receipe(receipe_id):
         db.session.add(receipe)
         db.session.commit()
 
-    return render_template('receipe/edit.html', form=form,
+    return render_template('receipes/edit.html', form=form,
                            receipe=receipe,
+                           processdata=actual_processdata)
+
+
+@main.route('/receipes/<receipe_id>/steps/create', methods=['GET', 'POST'])
+def create_step(receipe_id):
+    receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
+    form = StepForm()
+    if form.validate_on_submit():
+        if form.validate_on_submit():
+            step = Step()
+            step.receipe = receipe
+            step.name = form.name.data
+            step.setpoint = int(form.setpoint.data)
+            step.duration = int(form.duration.data)
+            step.comment = form.comment.data
+            db.session.add(step)
+            db.session.commit()
+            return redirect(
+                url_for('main.edit_receipe', receipe_id=receipe_id))
+    return render_template('steps/add.html', form=form,
                            processdata=actual_processdata)
 
 

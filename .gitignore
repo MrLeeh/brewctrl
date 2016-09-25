@@ -6,3 +6,4 @@ venv
 *.sqlite
 .idea
 migrations
+brewctrl.sublime-project

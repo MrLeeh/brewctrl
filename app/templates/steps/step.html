@@ -1,0 +1,10 @@
+{% from 'bootstrap/wtf.html' import form_field %}
+<form id="stepForm" name="stepForm" class="form" method="post">
+{{ form.hidden_tag() }}
+{{ form.StepForm() }}
+{{ form_field(form.name) }}
+{{ form_field(form.setpoint) }}
+{{ form_field(form.duration) }}
+{{ form_field(form.comment) }}
+{{ form_field(form.submit) }}
+</form>
