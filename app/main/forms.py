@@ -25,7 +25,10 @@ class TempCtrlSettingsForm(Form):
 
 class StepForm(Form):
     # insert a hidden field with the form name for identification in multiform page
-    StepForm = HiddenField("StepForm")
+    form_name = HiddenField()
+
+    # Place Step id for editin in HiddenField
+    step_id = HiddenField()
 
     # name of the step
     name = StringField(

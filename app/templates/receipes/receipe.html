@@ -10,45 +10,38 @@
 {{ super() }}
 <script>
   $(document).ready(function() {
+
+    // add step button opens modal containing step form loaded via ajax
     $('#addStepButton').click(function() {
       $.get("{{ url_for('main.create_step', receipe_id=receipe.id) }}", function(data) {
-        $('.modal-body').html(data);
-        $('#editStepDialog').modal();
+        $('#dialog').html('');
+        $('#dialog').html(data);
+        $('#stepDialog').modal();
       });
     });
 
-    $('#stepForm #submit').click(function(event) {
-      alert('click');
+    $('a#step-name').click(function(event) {
       event.preventDefault();
-      var form = $(this);
-      $.ajax({
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: form.serialize(),
-      }).done(function(data){
-        // optional success message
-      }).fail(function(data){
-        // optional fail message
+      var url = $SCRIPT_ROOT + '/steps/' + $(this).data('step-id') ;
+      $.get(url, function(data) {
+        $('#dialog').html('');
+        $('#dialog').html(data);
+        $('#stepDialog').modal();
+
+        $('#submit').click(function(event) {
+          event.preventDefault();
+          $.post(url, data=$('#stepForm').serialize(), function(data) {
+          });
+        });
       });
     });
+
   });
 </script>
 {% endblock %}
 
 {% block main %}
-<div id="editStepDialog" class="modal fade" tabindex=-1 role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Programmschritt bearbeiten</h4>
-      </div>
-      <div class="modal-body">
-      </div>
-    </div>
-  </div>
+<div id="dialog">
 </div>
 
 <legend>
@@ -85,7 +78,7 @@
             <tbody>
               {% for step in receipe.steps %}
               <tr id="step{{ step.id }}">
-                <td>{{ step.name }}</td>
+                <td><a id="step-name" href="" data-step-id="{{ step.id }}">{{ step.name }}</a></td>
                 <td align="center">{{ "{:.0f} °C".format(step.setpoint) }}</td>
                 <td align="center">{{ "{} Min.".format(step.duration) }}</td>
                 <td align="left">{% if not step.comment %}-{% else %}{{ step.comment }}{% endif %}</td>

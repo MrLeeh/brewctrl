@@ -77,10 +77,14 @@ def create_receipe():
 @main.route('/receipes/<receipe_id>', methods=['GET', 'POST'])
 def edit_receipe(receipe_id):
 
-    if 'StepForm' in request.form:
+    form_name = request.form.get('form_name')
+    if form_name == 'create_step':
         # redirect for adding a new step, use HTTP status code 307 to preserve
         # the POST method (https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#3xx_Redirection)
         return redirect(url_for('main.create_step', receipe_id=receipe_id), code=307)
+
+    elif form_name == 'edit_step':
+        return redirect(url_for('main.edit_step', step_id=request.form.get('step_id')), code=307)
 
     receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
     form = ReceipeForm(obj=receipe)
@@ -99,19 +103,36 @@ def edit_receipe(receipe_id):
 def create_step(receipe_id):
     receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
     form = StepForm()
+    form.form_name.data = 'create_step'
     if form.validate_on_submit():
-        if form.validate_on_submit():
-            step = Step()
-            step.receipe = receipe
-            step.name = form.name.data
-            step.setpoint = int(form.setpoint.data)
-            step.duration = int(form.duration.data)
-            step.comment = form.comment.data
-            db.session.add(step)
-            db.session.commit()
-            return redirect(
-                url_for('main.edit_receipe', receipe_id=receipe_id))
+        step = Step()
+        step.receipe = receipe
+        step.name = form.name.data
+        step.setpoint = int(form.setpoint.data)
+        step.duration = int(form.duration.data)
+        step.comment = form.comment.data
+        db.session.add(step)
+        db.session.commit()
+        return redirect(
+            url_for('main.edit_receipe', receipe_id=receipe_id))
     return render_template('steps/add.html', form=form,
+                           processdata=actual_processdata)
+
+
+@main.route('/steps/<step_id>', methods=['GET', 'POST'])
+def edit_step(step_id):
+    step = Step.query.filter(Step.id == step_id).first_or_404()
+    form = StepForm(obj=step)
+    form.form_name.data = 'edit_step'
+    form.step_id.data = step_id
+    if form.validate_on_submit():
+        step.name = form.name.data
+        step.setpoint = int(form.setpoint.data)
+        step.duration = int(form.duration.data)
+        step.comment = form.comment.data
+        db.session.add(step)
+        db.session.commit()
+    return render_template('steps/edit.html', form=form, step_id=step.id,
                            processdata=actual_processdata)
 
 
