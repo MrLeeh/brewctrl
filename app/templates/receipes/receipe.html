@@ -13,35 +13,70 @@
 
     // add step button opens modal containing step form loaded via ajax
     $('#addStepButton').click(function() {
-      $.get("{{ url_for('main.create_step', receipe_id=receipe.id) }}", function(data) {
-        $('#dialog').html('');
-        $('#dialog').html(data);
-        $('#stepDialog').modal();
-      });
-    });
-
-    $('a#step-name').click(function(event) {
-      event.preventDefault();
-      var url = $SCRIPT_ROOT + '/steps/' + $(this).data('step-id') ;
+      var url = "{{ url_for('main.create_step', receipe_id=receipe.id) }}";
       $.get(url, function(data) {
-        $('#dialog').html('');
-        $('#dialog').html(data);
+        $('#stepDialog .modal-content').html(data);
         $('#stepDialog').modal();
 
         $('#submit').click(function(event) {
           event.preventDefault();
           $.post(url, data=$('#stepForm').serialize(), function(data) {
+            if (data.status == 'ok') {
+              $('#stepDialog').modal('hide');
+              location.reload();
+            }
+            else {
+              $('#stepDialog .modal-content').html(data);
+            }
+          });
+        })
+      });
+    });
+
+    // click on step opens modal
+    $('a#step-name').click(function(event) {
+      event.preventDefault();
+      var url = $SCRIPT_ROOT + '/steps/' + $(this).data('step-id') ;
+      $.get(url, function(data) {
+        $('#stepDialog .modal-content').html(data);
+        $('#stepDialog').modal();
+
+        $('#submit').click(function(event) {
+          event.preventDefault();
+          $.post(url, data=$('#stepForm').serialize(), function(data) {
+            if (data.status == 'ok') {
+              $('#stepDialog').modal('hide');
+              location.reload();
+            }
+            else {
+              $('#stepDialog .modal-content').html(data);
+            }
+          });
+        });
+
+        // Delete step
+        $('#deleteStep').click(function(event) {
+          var step_id = $(this).data('step-id');
+          var url = $SCRIPT_ROOT + '/steps/' + step_id + '/delete';
+          $.ajax({
+            url: url,
+            type: 'DELETE',
+          }).done(function(data) {
+            location.reload();
           });
         });
       });
     });
-
   });
 </script>
 {% endblock %}
 
 {% block main %}
-<div id="dialog">
+<div id="stepDialog" class="modal fade" tabindex=-1 role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+    </div>
+  </div>
 </div>
 
 <legend>
@@ -89,7 +124,7 @@
         </div>
       </div>
     </div>
-    {{ form.submit(class='btn') }} oder <a href="">Abbrechen</a>
+    {{ form.submit(class='btn') }} oder <a href="{{ url_for('main.index') }}">Abbrechen</a>
   </form>
 </div>
 <div class="test">

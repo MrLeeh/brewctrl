@@ -3,7 +3,7 @@ import json
 from itertools import islice
 
 from . import main
-from flask import request, render_template, redirect, url_for
+from flask import request, render_template, redirect, url_for, jsonify
 from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm, StepForm
 from .. import socketio, db
 from ..control import new_processdata, tempcontroller, mixer, shutdown
@@ -77,15 +77,6 @@ def create_receipe():
 @main.route('/receipes/<receipe_id>', methods=['GET', 'POST'])
 def edit_receipe(receipe_id):
 
-    form_name = request.form.get('form_name')
-    if form_name == 'create_step':
-        # redirect for adding a new step, use HTTP status code 307 to preserve
-        # the POST method (https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#3xx_Redirection)
-        return redirect(url_for('main.create_step', receipe_id=receipe_id), code=307)
-
-    elif form_name == 'edit_step':
-        return redirect(url_for('main.edit_step', step_id=request.form.get('step_id')), code=307)
-
     receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
     form = ReceipeForm(obj=receipe)
 
@@ -93,6 +84,7 @@ def edit_receipe(receipe_id):
         receipe.name = form.name.data
         db.session.add(receipe)
         db.session.commit()
+        return redirect(url_for('main.index'))
 
     return render_template('receipes/edit.html', form=form,
                            receipe=receipe,
@@ -113,8 +105,7 @@ def create_step(receipe_id):
         step.comment = form.comment.data
         db.session.add(step)
         db.session.commit()
-        return redirect(
-            url_for('main.edit_receipe', receipe_id=receipe_id))
+        return jsonify(status='ok')
     return render_template('steps/add.html', form=form,
                            processdata=actual_processdata)
 
@@ -132,8 +123,20 @@ def edit_step(step_id):
         step.comment = form.comment.data
         db.session.add(step)
         db.session.commit()
+        return jsonify(status='ok')
     return render_template('steps/edit.html', form=form, step_id=step.id,
                            processdata=actual_processdata)
+
+
+@main.route('/steps/<step_id>/delete', methods=['DELETE'])
+def delete_step(step_id):
+    step = Step.query.filter(Step.id == step_id).first()
+    if step is None:
+        return jsonify(
+            status='error', message='no step with id {}'.format(step_id))
+    db.session.delete(step)
+    db.session.commit()
+    return jsonify(status='ok')
 
 
 @main.route('/settings/tempcontroller.html', methods=['GET', 'POST'])

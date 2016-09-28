@@ -1,1 +1,9 @@
 {% extends 'steps/step.html' %}
+{% block title %}
+Programmschritt bearbeiten
+{% endblock %}
+
+{% block footer %}
+{{ super() }}
+<button id="deleteStep" type="button" class="btn btn-danger" data-step-id="{{ form.step_id.data }}" style="float: left;">Entfernen</button>
+{% endblock %}

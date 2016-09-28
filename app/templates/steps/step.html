@@ -1,28 +1,26 @@
 {% from 'bootstrap/wtf.html' import form_field %}
-<div id="stepDialog" class="modal fade" tabindex=-1 role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <form id="stepForm" name="stepForm" class="form" method="post">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">Programmschritt bearbeiten</h4>
-        </div>
-        <div class="modal-body">
-          {{ form.hidden_tag() }}
-          {{ form.form_name }}
-          {{ form.step_id }}
-          {{ form_field(form.name) }}
-          {{ form_field(form.setpoint) }}
-          {{ form_field(form.duration) }}
-          {{ form_field(form.comment) }}
-
-        </div>
-        <div class="modal-footer">
-          {{ form_field(form.submit) }} oder <a href="" data-dismiss="modal">Abbrechen</a>
-        </div>
-      </form>
-    </div>
+<form id="stepForm" name="stepForm" class="form" method="post">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-label="close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+    {% block title %}
+    {% endblock %}
+    </h4>
   </div>
-</div>
+  <div class="modal-body">
+    {{ form.hidden_tag() }}
+    {{ form.form_name }}
+    {{ form.step_id }}
+    {{ form_field(form.name) }}
+    {{ form_field(form.setpoint) }}
+    {{ form_field(form.duration) }}
+    {{ form_field(form.comment) }}
+  </div>
+  <div class="modal-footer">
+    {% block footer %}
+      {{ form_field(form.submit) }} oder <a href="" data-dismiss="modal">Abbrechen</a>
+    {% endblock %}
+  </div>
+</form>
