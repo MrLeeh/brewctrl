@@ -1,0 +1,14 @@
+{% macro suffix_field(field, suffix) %}
+  <div class="form-group"{% if field.errors %} error{% endif %}">
+    {{ field.label(class="control-label") }}
+    {% if suffix != "" %}<div class="input-group{% if field.errors %} has-error{% endif %}">{% endif %}
+    {{ field(class="form-control", **kwargs) }}
+    {% if suffix != "" %}
+      <span class="input-group-addon">{{ suffix }}</span>
+    {% endif %}
+    {% if suffix != "" %}</div>{% endif %}
+    {% for error in field.errors %}
+      <span class="help-block">{{ error }}</span>
+    {% endfor %}
+  </div>
+{% endmacro %}

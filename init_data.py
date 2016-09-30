@@ -19,19 +19,23 @@ with app.app_context():
     step_templates = [
         Step(
             name='Eiweißrast',
-            setpoint=54
+            setpoint=54,
+            duration=10
         ),
         Step(
             name='Maltoserast',
-            setpoint=63
+            setpoint=63,
+            duration=45
         ),
         Step(
             name='Verzuckerungsrast',
-            setpoint=72
+            setpoint=72,
+            duration=45
         ),
         Step(
             name='Abmaischen',
-            setpoint=78
+            setpoint=78,
+            duration=10
         )
     ]
 

@@ -99,6 +99,7 @@ def create_step(receipe_id):
     # add template choices
     form.template.choices = [(x.id, x.name)
                              for x in Step.query.filter(Step.template)]
+    form.template.choices.insert(0, (-1, '-'))
 
     if form.validate_on_submit():
         step = Step()
@@ -121,6 +122,7 @@ def edit_step(step_id):
     # add template choices
     form.template.choices = [(x.id, x.name)
                              for x in Step.query.filter(Step.template)]
+    form.template.choices.insert(0, (-1, '-'))
 
     if form.validate_on_submit():
         step.name = form.name.data
@@ -198,7 +200,8 @@ def ajax_get_step_data(step_id):
     return jsonify(dict(
         id=step.id,
         name=step.name,
-        setpoint=step.setpoint
+        setpoint=step.setpoint,
+        duration=step.duration
     ))
 
 
