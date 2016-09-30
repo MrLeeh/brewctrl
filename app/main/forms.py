@@ -1,7 +1,7 @@
 from ..models import Receipe, Step
 from flask_wtf import Form
 from wtforms import StringField, DecimalField, SubmitField, SelectField, \
-    IntegerField, TextAreaField, HiddenField
+    IntegerField, TextAreaField
 from wtforms.validators import Length, DataRequired, NumberRange
 
 
@@ -24,20 +24,16 @@ class TempCtrlSettingsForm(Form):
 
 
 class StepForm(Form):
-    # insert a hidden field with the form name for identification in multiform page
-    form_name = HiddenField()
-
-    # Place Step id for editin in HiddenField
-    step_id = HiddenField()
-
     # name of the step
     name = StringField(
         'Name:', validators=[DataRequired(), Length(0, Step.name.type.length)])
 
+    template = SelectField('Vorlage:', coerce=int)
+
     # temperature setpoint in °C
     setpoint = DecimalField(
         'Temperatur:', places=0, validators=[DataRequired(),
-                                            NumberRange(0, 100)]
+                                             NumberRange(0, 100)]
     )
 
     # step duration in minutes

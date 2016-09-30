@@ -30,7 +30,7 @@ def index():
     else:
         form.setpoint.data = tempcontroller.setpoint
 
-    datapoint_query = ProcessData.query.filter(ProcessData.brewjob == None)
+    datapoint_query = ProcessData.query.filter(ProcessData.brewjob is None)
     graph_data = dict(
         time=[],
         temp=[],
@@ -95,7 +95,11 @@ def edit_receipe(receipe_id):
 def create_step(receipe_id):
     receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
     form = StepForm()
-    form.form_name.data = 'create_step'
+
+    # add template choices
+    form.template.choices = [(x.id, x.name)
+                             for x in Step.query.filter(Step.template)]
+
     if form.validate_on_submit():
         step = Step()
         step.receipe = receipe
@@ -106,16 +110,18 @@ def create_step(receipe_id):
         db.session.add(step)
         db.session.commit()
         return jsonify(status='ok')
-    return render_template('steps/add.html', form=form,
-                           processdata=actual_processdata)
+    return render_template('steps/add.html', form=form)
 
 
 @main.route('/steps/<step_id>', methods=['GET', 'POST'])
 def edit_step(step_id):
     step = Step.query.filter(Step.id == step_id).first_or_404()
     form = StepForm(obj=step)
-    form.form_name.data = 'edit_step'
-    form.step_id.data = step_id
+
+    # add template choices
+    form.template.choices = [(x.id, x.name)
+                             for x in Step.query.filter(Step.template)]
+
     if form.validate_on_submit():
         step.name = form.name.data
         step.setpoint = int(form.setpoint.data)
@@ -124,8 +130,7 @@ def edit_step(step_id):
         db.session.add(step)
         db.session.commit()
         return jsonify(status='ok')
-    return render_template('steps/edit.html', form=form, step_id=step.id,
-                           processdata=actual_processdata)
+    return render_template('steps/edit.html', form=form, step_id=step.id)
 
 
 @main.route('/steps/<step_id>/delete', methods=['DELETE'])
@@ -178,10 +183,23 @@ def ajax_add_step():
     step.duration = request.form['duration']
     step.comment = request.form['comment']
     step.enable_mixer = request.form['enable_mixer']
+
     db.session.add(step)
     db.session.commit()
     logger.debug('added step')
     return json.dumps('{"status": "ok"}')
+
+
+@main.route('/steps/_templates/<step_id>', methods=['GET'])
+def ajax_get_step_data(step_id):
+    step = Step.query.filter_by(id=step_id).first()
+    if step is None:
+        return
+    return jsonify(dict(
+        id=step.id,
+        name=step.name,
+        setpoint=step.setpoint
+    ))
 
 
 @main.route('/steps/add', methods=['GET', 'POST'])

@@ -44,6 +44,7 @@ class Step(db.Model):
     setpoint = db.Column(db.Integer())
     duration = db.Column(db.Integer())
     comment = db.Column(db.Text())
+    template = db.Column(db.Boolean(), default=False)
     enable_heater = db.Column(db.Boolean(), default=True)
     enable_mixer = db.Column(db.Boolean(), default=True)
     state = State.INACTIVE

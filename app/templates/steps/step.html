@@ -11,8 +11,7 @@
   </div>
   <div class="modal-body">
     {{ form.hidden_tag() }}
-    {{ form.form_name }}
-    {{ form.step_id }}
+    {{ form_field(form.template) }}
     {{ form_field(form.name) }}
     {{ form_field(form.setpoint) }}
     {{ form_field(form.duration) }}

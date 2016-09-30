@@ -9,6 +9,18 @@
 {% block script %}
 {{ super() }}
 <script>
+  var install_template_hook = function() {
+    $('#template').change(function() {
+      var template_step_id = $('#template option:selected').val();
+      var url = $SCRIPT_ROOT + '/steps/_templates/' + template_step_id;
+      $.get(url, function(data) {
+        $dlg = $('#stepDialog');
+        $dlg.find('#name').val(data.name);
+        $dlg.find('#setpoint').val(data.setpoint);
+      });
+    })
+  }
+
   $(document).ready(function() {
 
     // add step button opens modal containing step form loaded via ajax
@@ -16,6 +28,7 @@
       var url = "{{ url_for('main.create_step', receipe_id=receipe.id) }}";
       $.get(url, function(data) {
         $('#stepDialog .modal-content').html(data);
+        install_template_hook();
         $('#stepDialog').modal();
 
         $('#submit').click(function(event) {
@@ -36,9 +49,12 @@
     // click on step opens modal
     $('a#step-name').click(function(event) {
       event.preventDefault();
-      var url = $SCRIPT_ROOT + '/steps/' + $(this).data('step-id') ;
+      var step_id = $(this).data('step-id');
+      var url = $SCRIPT_ROOT + '/steps/' + step_id ;
+
       $.get(url, function(data) {
         $('#stepDialog .modal-content').html(data);
+        install_template_hook();
         $('#stepDialog').modal();
 
         $('#submit').click(function(event) {
@@ -56,7 +72,6 @@
 
         // Delete step
         $('#deleteStep').click(function(event) {
-          var step_id = $(this).data('step-id');
           var url = $SCRIPT_ROOT + '/steps/' + step_id + '/delete';
           $.ajax({
             url: url,
