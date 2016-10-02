@@ -1,7 +1,7 @@
 /*
 * @Author: Stefan Lehmann
 * @Date:   2016
-* @Last Modified by:   Stefan Lehmann
+* @Last Modified by:   stefan
 * @Last Modified time: 2016
 */
 
@@ -123,4 +123,11 @@ progress.vertical {
 
 .input-group-addon {
   min-width: 55px;
+}
+
+.ellipsis {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

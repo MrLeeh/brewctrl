@@ -29,6 +29,7 @@
           $dlg.find('#name').val(data.name);
           $dlg.find('#setpoint').val(data.setpoint);
           $dlg.find('#duration').val(data.duration);
+          $dlg.find('#comment').val(data.comment);
         });
       }
     })
@@ -121,26 +122,28 @@
           </div>
         </div>
         <div class="panel-body">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Schritt</th>
-                <th>Temperatur</th>
-                <th>Dauer</th>
-                <th>Kommentar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for step in receipe.steps %}
-              <tr id="step{{ step.id }}">
-                <td><a id="step-name" href="" data-step-id="{{ step.id }}">{{ step.name }}</a></td>
-                <td align="center">{{ "{:.0f} °C".format(step.setpoint) }}</td>
-                <td align="center">{{ "{} Min.".format(step.duration) }}</td>
-                <td align="left">{% if not step.comment %}-{% else %}{{ step.comment }}{% endif %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Schritt</th>
+                  <th>Temperatur</th>
+                  <th>Dauer</th>
+                  <th>Kommentar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for step in receipe.steps %}
+                <tr id="step{{ step.id }}">
+                  <td><a id="step-name" href="" data-step-id="{{ step.id }}">{{ step.name }}</a></td>
+                  <td align="center">{{ "{:.0f} °C".format(step.setpoint) }}</td>
+                  <td align="center">{{ "{} Min.".format(step.duration) }}</td>
+                  <td class="ellipsis" align="left">{% if not step.comment %}-{% else %}{{ step.comment }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

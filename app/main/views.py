@@ -201,7 +201,8 @@ def ajax_get_step_data(step_id):
         id=step.id,
         name=step.name,
         setpoint=step.setpoint,
-        duration=step.duration
+        duration=step.duration,
+        comment=step.comment
     ))
 
 
