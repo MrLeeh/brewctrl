@@ -147,6 +147,11 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-xs-12">
+        {{ edit_field(form.comment) }}
+      </div>
+    </div>
     {{ form.submit(class='btn') }} oder <a href="{{ url_for('main.index') }}">Abbrechen</a>
   </form>
 </div>

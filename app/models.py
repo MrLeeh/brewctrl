@@ -33,6 +33,7 @@ class Receipe(db.Model):
     __tablename__ = 'receipes'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
+    comment = db.Column(db.Text())
 
 
 class Step(db.Model):
