@@ -21,6 +21,10 @@ def create_app(config_name):
     socketio.init_app(app)
     db.init_app(app)
 
+    if app.debug:
+        from flaskext.lesscss import lesscss
+        lesscss(app)
+
     # init logger
     logger = logging.getLogger('brewctrl')
     logger.setLevel(app.config['LOGGING_LEVEL'])

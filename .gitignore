@@ -7,3 +7,4 @@ venv
 .idea
 migrations
 brewctrl.sublime-project
+styles.css

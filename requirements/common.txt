@@ -1,6 +1,7 @@
 blinker
 flask
 flask-bootstrap
+git+https://github.com/AbhishekBiswal/flask-lesscss.git#egg=flask-lesscss
 flask-migrate
 flask-script
 flask-socketio
