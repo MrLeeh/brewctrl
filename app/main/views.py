@@ -3,7 +3,8 @@ import json
 from itertools import islice
 
 from . import main
-from flask import request, render_template, redirect, url_for, jsonify
+from flask import request, render_template, redirect, url_for, jsonify, \
+    current_app
 from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm, StepForm
 from .. import socketio, db
 from ..control import new_processdata, tempcontroller, mixer, shutdown
@@ -19,7 +20,6 @@ def handle_new_processdata(pd):
 logger = logging.getLogger('brewctrl.main.views')
 new_processdata.connect(handle_new_processdata)
 actual_processdata = None
-current_receipe = None
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -54,7 +54,11 @@ def index():
         graph_data['power'].append(p.tempctrl_power)
 
     # is there a current receipe?
-    global current_receipe
+    current_receipe_id = request.cookies.get('current_receipe_id')
+    if current_receipe_id is None:
+        current_receipe = None
+    else:
+        current_receipe = Receipe.query.get(current_receipe_id)
 
     return render_template(
         'index.html', form=form, processdata=actual_processdata,
@@ -174,6 +178,18 @@ def ajax_list_receipes():
     for receipe in receipes:
         receipe_list.append(dict(id=receipe.id, name=receipe.name))
     return json.dumps(receipe_list)
+
+
+@main.route('/receipes/load/<receipe_id>')
+def load_receipe(receipe_id):
+    receipe = Receipe.query.filter_by(id=receipe_id).first()
+    if receipe is None:
+        current_receipe_id = -1
+    else:
+        current_receipe_id = receipe_id
+    response = current_app.make_response(redirect(url_for('main.index')))
+    response.set_cookie('current_receipe_id', value=current_receipe_id)
+    return response
 
 
 @main.route('/receipes/_add_step', methods=['POST'])
