@@ -234,40 +234,61 @@
 
 {% block main %}
 <div class="row">
-  <div id="overviewPanel" class="panel panel-default">
-    <div class="panel-heading">
-      <h4 class="panel-title">
-        Überblick
-      </h4>
-    </div>
-    <div class="panel-body">
-      <div class="row">
-        <div class="col-sm-12">
-          <form class="form" method="post">
-            {{ form.hidden_tag() }}
-            {{ decimal_field_vertical(form.setpoint, '°C') }}
-          </form>
+
+  <!-- Graphical overview -->
+  <div class="col-md-4">
+    <div id="overviewPanel" class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          Überblick
+        </h4>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-sm-12">
+            <form class="form" method="post">
+              {{ form.hidden_tag() }}
+              {{ decimal_field_vertical(form.setpoint, '°C') }}
+            </form>
+          </div>
         </div>
-      <div class="row">
-        <div class="col-sm-12">
-          <div style="position: relative">
-            <img id="img-animation" class="img-responsive image" src="static/images/einkocher.jpg"/>
-            <div id="gauge" class="gauge"></div>
-            <div id="power" class="power"></div>
-            <div id="temp" class="temp"></div>
-            <div id="heaterStateLight" title="Heizer ein/aus"></div>
+        <div class="row">
+          <div class="col-sm-12">
+            <div style="position: relative">
+              <img id="img-animation" class="img-responsive image" src="static/images/einkocher.jpg"/>
+              <div id="gauge" class="gauge"></div>
+              <div id="power" class="power"></div>
+              <div id="temp" class="temp"></div>
+              <div id="heaterStateLight" title="Heizer ein/aus"></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  </div>
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4 class="panel-title"> Verlauf </h4>
+
+  <!-- Receipe Panel  -->
+  <div class="col-md-8">
+    <div id="receipePanel" class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Aktuelles Rezept</h3>
+      </div>
+      <div class="panel-body">
+      </div>
     </div>
-    <div class="panel-body" id="trendPanel">
-      <div id="trendDiv"></div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Diagram Panel -->
+  <div class="col-md-12">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="panel-title"> Verlauf </h4>
+      </div>
+      <div class="panel-body" id="trendPanel">
+        <div id="trendDiv"></div>
+      </div>
     </div>
   </div>
 </div>

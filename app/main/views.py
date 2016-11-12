@@ -19,6 +19,7 @@ def handle_new_processdata(pd):
 logger = logging.getLogger('brewctrl.main.views')
 new_processdata.connect(handle_new_processdata)
 actual_processdata = None
+current_receipe = None
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -30,6 +31,7 @@ def index():
     else:
         form.setpoint.data = tempcontroller.setpoint
 
+    # get datapoints
     datapoint_query = ProcessData.query.filter(ProcessData.brewjob is None)
     graph_data = dict(
         time=[],
@@ -51,9 +53,12 @@ def index():
         graph_data['temp_setpoint'].append(p.temp_setpoint)
         graph_data['power'].append(p.tempctrl_power)
 
+    # is there a current receipe?
+    global current_receipe
+
     return render_template(
         'index.html', form=form, processdata=actual_processdata,
-        graph_data=graph_data
+        graph_data=graph_data, current_receipe=current_receipe
     )
 
 

@@ -57,12 +57,13 @@
 </script>
 
 <ul class="nav navbar-nav navbar-left">
-  <li class="drowdown">
+  <li class="dropdown">
     <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Braurezept<span class="caret"></span></a>
     <ul class="dropdown-menu">
       <li id="newReceipeButton"><a href="{{ url_for('main.create_receipe') }}">Neues Rezept erstellen...</a></li>
       <li role="separator" class="divider"></li>
-      <li id="editReceipeButton"><a href="" data-toggle="modal" data-target="#openReceipeDialog">Rezept öffnen...</a></li>
+      <li id="loadReceipeButton"><a href="" data-toggle="modal" data-target="#loadReceipeDialog">Rezept laden...</a></li>
+      <li id="editReceipeButton"><a href="" data-toggle="modal" data-target="#openReceipeDialog">Rezept bearbeiten...</a></li>
     </ul>
   </li>
 
