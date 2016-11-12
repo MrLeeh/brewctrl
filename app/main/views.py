@@ -18,6 +18,7 @@ def handle_new_processdata(pd):
 
 new_processdata.connect(handle_new_processdata)
 actual_processdata = None
+current_receipe_id = -1
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -52,7 +53,7 @@ def index():
         graph_data['power'].append(p.tempctrl_power)
 
     # is there a current receipe?
-    current_receipe_id = request.cookies.get('current_receipe_id')
+    global current_receipe_id
     if current_receipe_id is None:
         current_receipe = None
     else:
@@ -181,13 +182,13 @@ def ajax_list_receipes():
 @main.route('/receipes/load/<receipe_id>')
 def load_receipe(receipe_id):
     receipe = Receipe.query.filter_by(id=receipe_id).first()
+    global current_receipe_id
     if receipe is None:
         current_receipe_id = -1
     else:
         current_receipe_id = receipe_id
-    response = current_app.make_response(redirect(url_for('main.index')))
-    response.set_cookie('current_receipe_id', value=current_receipe_id)
-    return response
+
+    return redirect(url_for('main.index'))
 
 
 @main.route('/receipes/_add_step', methods=['POST'])
