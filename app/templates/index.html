@@ -271,7 +271,10 @@
   <div class="col-md-8">
     <div id="receipePanel" class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">Aktuelles Rezept:{% if current_receipe %} {{ current_receipe.name }}{% endif %}</h3>
+        <h3 class="panel-title">
+          Aktuelles Rezept:{% if current_receipe %} {{ current_receipe.name }}{% endif %}
+          <button class="btn btn-primary pull-right btn-xs">Run</button>
+        </h3>
       </div>
       <div class="panel-body">
       {% if current_receipe %}

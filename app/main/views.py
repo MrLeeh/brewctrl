@@ -1,4 +1,3 @@
-import logging
 import json
 from itertools import islice
 
@@ -17,7 +16,6 @@ def handle_new_processdata(pd):
     socketio.emit('process_data', pd)
 
 
-logger = logging.getLogger('brewctrl.main.views')
 new_processdata.connect(handle_new_processdata)
 actual_processdata = None
 
@@ -43,7 +41,7 @@ def index():
     # if datapoints more then only a point each minute
     datapoint_count = datapoint_query.count()
     datapoint_iterator = iter(datapoint_query)
-    logger.debug('current datapoint count: {}'.format(datapoint_count))
+    current_app.logger.debug('current datapoint count: {}'.format(datapoint_count))
     if datapoint_count > 3600:
         datapoint_iterator = islice(datapoint_iterator, 0, None, 60)
 
@@ -209,7 +207,7 @@ def ajax_add_step():
 
     db.session.add(step)
     db.session.commit()
-    logger.debug('added step')
+    current_app.logger.debug('added step')
     return json.dumps('{"status": "ok"}')
 
 
