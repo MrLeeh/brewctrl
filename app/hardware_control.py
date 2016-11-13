@@ -125,7 +125,7 @@ class PWM_DC:
 
 class TempController:
     """
-        Temperature controller
+    Controller class for temperature
 
     """
 
@@ -280,6 +280,10 @@ class TempController:
 
 
 class Mixer:
+    """
+    Controller class for mixer.
+
+    """
     def __init__(self):
         self._enabled = False
 
@@ -299,7 +303,8 @@ class Mixer:
         self._enabled = value
 
 
-tempcontroller = TempController()
+
+temperature_controller = TempController()
 mixer = Mixer()
 
 
@@ -310,7 +315,7 @@ def init_control(app):
             init_db()
 
             # init the temperature controller
-            tempcontroller.load_settings()
+            temperature_controller.load_settings()
 
             # clear unsaved process_data
             for p in ProcessData.query.filter(ProcessData.brewjob == None).all():
@@ -334,15 +339,15 @@ def background_thread(app):
     t.start()
 
     with app.app_context():
-        tempcontroller.process(actual_time)
+        temperature_controller.process(actual_time)
         process_data = ProcessData()
         process_data.datetime = actual_time
-        process_data.temp_setpoint = tempcontroller.setpoint
-        process_data.temp_actual = tempcontroller.temp
-        process_data.tempctrl_active = tempcontroller.active
-        process_data.tempctrl_power = tempcontroller.power
-        process_data.tempctrl_output = tempcontroller.output
-        process_data.heater_enabled = tempcontroller.heater_enabled
+        process_data.temp_setpoint = temperature_controller.setpoint
+        process_data.temp_actual = temperature_controller.temp
+        process_data.tempctrl_active = temperature_controller.active
+        process_data.tempctrl_power = temperature_controller.power
+        process_data.tempctrl_output = temperature_controller.output
+        process_data.heater_enabled = temperature_controller.heater_enabled
         process_data.mixer_enabled = mixer.enabled
         db.session.add(process_data)
         db.session.commit()

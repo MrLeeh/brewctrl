@@ -40,7 +40,7 @@ def create_app(config_name):
     logger.addHandler(ch)
 
     # init control
-    from .control import init_control
+    from .hardware_control import init_control
     init_control(app)
 
     from .main import main as main_blueprint

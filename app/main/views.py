@@ -6,7 +6,7 @@ from flask import request, render_template, redirect, url_for, jsonify, \
     current_app
 from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm, StepForm
 from .. import socketio, db
-from ..control import new_processdata, tempcontroller, mixer, shutdown
+from ..hardware_control import new_processdata, temperature_controller, mixer, shutdown
 from ..models import ProcessData, Receipe, Step, TempCtrlSettings
 
 
@@ -26,9 +26,9 @@ current_receipe_id = -1
 def index():
     form = MainForm()
     if form.validate_on_submit():
-        tempcontroller.setpoint = float(form.setpoint.data)
+        temperature_controller.setpoint = float(form.setpoint.data)
     else:
-        form.setpoint.data = tempcontroller.setpoint
+        form.setpoint.data = temperature_controller.setpoint
 
     # get datapoints
     datapoint_query = ProcessData.query.filter(ProcessData.brewjob is None)
@@ -154,7 +154,7 @@ def delete_step(step_id):
     return jsonify(status='ok')
 
 
-@main.route('/settings/tempcontroller.html', methods=['GET', 'POST'])
+@main.route('/settings/temperature_controller.html', methods=['GET', 'POST'])
 def tempcontroller_settings():
     settings = TempCtrlSettings.query.first_or_404()
     form = TempCtrlSettingsForm(obj=settings)
@@ -164,9 +164,9 @@ def tempcontroller_settings():
         settings.duty_cycle = float(form.duty_cycle.data)
         db.session.add(settings)
         db.session.commit()
-        tempcontroller.load_settings()
+        temperature_controller.load_settings()
         return redirect(url_for('main.index'))
-    return render_template('settings/tempcontroller.html', form=form,
+    return render_template('settings/temperature_controller.html', form=form,
                            processdata=actual_processdata)
 
 
@@ -234,7 +234,7 @@ def add_step(receipe_id):
 @socketio.on('enable_tempctrl')
 def handle_enable_tempctrl(json):
     enabled = json['data']
-    tempcontroller.enabled = enabled
+    temperature_controller.enabled = enabled
 
 
 @socketio.on('enable_mixer')

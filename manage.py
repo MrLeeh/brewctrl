@@ -11,7 +11,7 @@ import eventlet
 import os
 from app import create_app, db
 from app.models import TempCtrlSettings, ProcessData, Step, Receipe
-from app.control import tempcontroller
+from app.hardware_control import temperature_controller
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
@@ -28,7 +28,7 @@ migrate = Migrate(app, db)
 
 def make_shell_context():
     return dict(app=app, db=db, TempCtrlSettings=TempCtrlSettings,
-                tempcontroller=tempcontroller, ProcessData=ProcessData,
+                tempcontroller=temperature_controller, ProcessData=ProcessData,
                 Step=Step, Receipe=Receipe)
 
 
@@ -58,6 +58,22 @@ def test():
     import unittest
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
+
+
+@manager.command
+def coverage():
+    """ Check coverage """
+    import coverage
+    cov = coverage.Coverage()
+    cov.start()
+
+    test()
+
+    cov.stop()
+    cov.save()
+
+    cov.html_report()
+    cov.report()
 
 
 if __name__ == '__main__':

@@ -1,0 +1,6 @@
+[run]
+  source =
+    app/
+
+  omit =
+    app/db_repository/*
