@@ -9,9 +9,8 @@ licensed under the MIT license
 import sys
 import eventlet
 import os
-from app import create_app, db
+from app import create_app, db, brew_controller
 from app.models import TempCtrlSettings, ProcessData, Step, Receipe
-from app.hardware_control import temperature_controller
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
@@ -28,7 +27,7 @@ migrate = Migrate(app, db)
 
 def make_shell_context():
     return dict(app=app, db=db, TempCtrlSettings=TempCtrlSettings,
-                tempcontroller=temperature_controller, ProcessData=ProcessData,
+                brew_controller=brew_controller, ProcessData=ProcessData,
                 Step=Step, Receipe=Receipe)
 
 

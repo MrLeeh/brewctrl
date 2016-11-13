@@ -1,7 +1,8 @@
 import unittest
 from app import create_app, db
 from app.models import Receipe, Step
-from app.recipe_control import RecipeController, RecipeControllerException
+from app.hardware import temperature_controller
+from app.recipe import RecipeController, RecipeControllerException
 
 
 class RecipeControllerTestCase(unittest.TestCase):
@@ -36,7 +37,9 @@ class RecipeControllerTestCase(unittest.TestCase):
         db.session.add_all(steps)
         db.session.commit()
 
-        self.recipe_controller = RecipeController(self.app)
+        self.recipe_controller = RecipeController(
+            self.app, temperature_controller
+        )
 
     def tearDown(self):
         db.session.remove()

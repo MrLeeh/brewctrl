@@ -11,8 +11,9 @@ class RecipeController:
     Controller class for recipe progress
 
     """
-    def __init__(self, app):
+    def __init__(self, app, temperature_controller):
         self._app = app
+        self._temperature_controller = temperature_controller
         self.recipe_id = -1
         self.running = False
 

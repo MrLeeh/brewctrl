@@ -53,8 +53,6 @@ except IndexError:
     simulation_model = SimulationModel()
 
 
-new_processdata = blinker.signal('new processdata')
-
 
 def read_temp_raw():
     f = open(device_file, 'r')
@@ -91,12 +89,6 @@ def set_heater_output(val: bool):
 
 def set_mixer_output(val: bool):
     return set_output(pin=MIXER_PIN, state=(1 if val else 0))
-
-
-def shutdown():
-   logger.debug('system is shutting down')
-   if not simulation_mode:
-       os.system('shutdown halt')
 
 
 class PWM_DC:
@@ -301,57 +293,6 @@ class Mixer:
         if not simulation_mode:
             set_mixer_output(value)
         self._enabled = value
-
-
-
-temperature_controller = TempController()
-mixer = Mixer()
-
-
-def init_control(app):
-    # load settings for temperature controller or init them
-    try:
-        with app.app_context():
-            init_db()
-
-            # init the temperature controller
-            temperature_controller.load_settings()
-
-            # clear unsaved process_data
-            for p in ProcessData.query.filter(ProcessData.brewjob == None).all():
-                db.session.delete(p)
-            db.session.commit()
-
-            # init background thread
-            t = Timer(app.config['REFRESH_TIME'], background_thread, [app])
-            t.daemon = True
-            t.start()
-
-    except OperationalError as e:
-        logger.error(e)
-
-
-def background_thread(app):
-    actual_time = datetime.now()
-
-    t = Timer(app.config['REFRESH_TIME'], background_thread, args=[app])
-    t.daemon = True
-    t.start()
-
-    with app.app_context():
-        temperature_controller.process(actual_time)
-        process_data = ProcessData()
-        process_data.datetime = actual_time
-        process_data.temp_setpoint = temperature_controller.setpoint
-        process_data.temp_actual = temperature_controller.temp
-        process_data.tempctrl_active = temperature_controller.active
-        process_data.tempctrl_power = temperature_controller.power
-        process_data.tempctrl_output = temperature_controller.output
-        process_data.heater_enabled = temperature_controller.heater_enabled
-        process_data.mixer_enabled = mixer.enabled
-        db.session.add(process_data)
-        db.session.commit()
-        new_processdata.send(process_data.jsonify())
 
 
 if __name__ == '__main__':

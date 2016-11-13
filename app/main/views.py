@@ -5,8 +5,8 @@ from . import main
 from flask import request, render_template, redirect, url_for, jsonify, \
     current_app
 from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm, StepForm
-from .. import socketio, db
-from ..hardware_control import new_processdata, temperature_controller, mixer, shutdown
+from .. import socketio, db, brew_controller
+from ..brewcontroller import new_processdata
 from ..models import ProcessData, Receipe, Step, TempCtrlSettings
 
 
@@ -25,6 +25,8 @@ current_receipe_id = -1
 @main.route('/index', methods=['GET', 'POST'])
 def index():
     form = MainForm()
+
+    temperature_controller = brew_controller.temperature_controller
     if form.validate_on_submit():
         temperature_controller.setpoint = float(form.setpoint.data)
     else:
@@ -164,7 +166,7 @@ def tempcontroller_settings():
         settings.duty_cycle = float(form.duty_cycle.data)
         db.session.add(settings)
         db.session.commit()
-        temperature_controller.load_settings()
+        brew_controller.temperature_controller.load_settings()
         return redirect(url_for('main.index'))
     return render_template('settings/temperature_controller.html', form=form,
                            processdata=actual_processdata)
@@ -234,13 +236,13 @@ def add_step(receipe_id):
 @socketio.on('enable_tempctrl')
 def handle_enable_tempctrl(json):
     enabled = json['data']
-    temperature_controller.enabled = enabled
+    brew_controller.temperature_controller.enabled = enabled
 
 
 @socketio.on('enable_mixer')
 def handle_enable_mixer(json):
     enabled = json['data']
-    mixer.enabled = enabled
+    brew_controller.mixer.enabled = enabled
 
 
 @socketio.on('shutdown')

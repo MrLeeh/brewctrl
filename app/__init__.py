@@ -5,9 +5,13 @@ from flask_socketio import SocketIO
 from config import config
 
 
+
 bootstrap = Bootstrap()
 socketio = SocketIO()
 db = SQLAlchemy()
+
+from .brewcontroller import BrewController
+brew_controller = BrewController()
 
 
 def create_app(config_name):
@@ -24,8 +28,7 @@ def create_app(config_name):
         lesscss(app)
 
     # init control
-    from .hardware_control import init_control
-    init_control(app)
+    brew_controller.init_app(app)
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
