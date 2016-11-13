@@ -1,8 +1,7 @@
 import unittest
-from app import create_app, db
+from app import create_app, db, brew_controller
 from app.models import Receipe, Step
-from app.hardware import temperature_controller
-from app.recipe import RecipeController, RecipeControllerException
+from app.brewcontroller import BrewControllerException
 
 
 class RecipeControllerTestCase(unittest.TestCase):
@@ -11,9 +10,6 @@ class RecipeControllerTestCase(unittest.TestCase):
         self.app = create_app('testing')
         self.app_context = self.app.app_context()
         self.app_context.push()
-
-        # create test database
-        db.create_all()
 
         # add recipe data
         recipe = Receipe(
@@ -37,10 +33,6 @@ class RecipeControllerTestCase(unittest.TestCase):
         db.session.add_all(steps)
         db.session.commit()
 
-        self.recipe_controller = RecipeController(
-            self.app, temperature_controller
-        )
-
     def tearDown(self):
         db.session.remove()
         db.drop_all()
@@ -51,22 +43,24 @@ class RecipeControllerTestCase(unittest.TestCase):
         recipe = Receipe.query.first()
 
         # assign new recipe
-        self.recipe_controller.load_recipe(recipe.id)
+        with self.assertRaises(BrewControllerException):
+            brew_controller.load_recipe(-1)
+        brew_controller.load_recipe(recipe.id)
 
         # test recipe id
-        self.assertEqual(recipe.id, self.recipe_controller.recipe_id)
+        self.assertEqual(recipe.id, brew_controller._loaded_recipe_id)
 
         # start recipe
-        self.recipe_controller.start()
-        self.assertTrue(self.recipe_controller.running)
+        brew_controller.start()
+        self.assertTrue(brew_controller.running)
 
         # trying to load recipe should raise Exception
-        with self.assertRaises(RecipeControllerException):
-            self.recipe_controller.load_recipe(1)
+        with self.assertRaises(BrewControllerException):
+            brew_controller.load_recipe(1)
 
         # trying to restart should raise Exception
-        with self.assertRaises(RecipeControllerException):
-            self.recipe_controller.start()
+        with self.assertRaises(BrewControllerException):
+            brew_controller.start()
 
 
 if __name__ == '__main__':

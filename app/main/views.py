@@ -247,4 +247,4 @@ def handle_enable_mixer(json):
 
 @socketio.on('shutdown')
 def handle_shutdown():
-    shutdown()
+    brew_controller.shutdown()

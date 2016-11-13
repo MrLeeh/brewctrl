@@ -6,11 +6,16 @@ from sqlalchemy.exc import OperationalError
 
 from . import db
 from .hardware import TempController, Mixer, simulation_mode
-from .models import TempCtrlSettings, ProcessData, init_db
+from .models import TempCtrlSettings, ProcessData, init_db, Receipe
 
 
 # blinker signal for new processdata
 new_processdata = blinker.signal('new processdata')
+
+
+class BrewControllerException(Exception):
+    """ Exception occured during brew control handling """
+    pass
 
 
 def background_thread(brewcontroller):
@@ -47,35 +52,57 @@ def background_thread(brewcontroller):
 class BrewController:
 
     def __init__(self, app=None):
-
-        pass
+        if app is not None:
+            self.init_app()
 
     def init_app(self, app):
 
         self._app = app
         self._logger = self._app.logger
+        self._loaded_recipe_id = -1
+
         self.temperature_controller = TempController()
         self.mixer = Mixer()
+        self.running = False
+        self.loaded_recipe = None
 
-        try:
-            with self._app.app_context():
-                init_db()
+        with self._app.app_context():
+            init_db()
 
-                # init the temperature controller
-                self.temperature_controller.load_settings()
+            # init the temperature controller
+            self.temperature_controller.load_settings()
 
-                # clear unsaved process_data
-                for p in ProcessData.query.filter(ProcessData.brewjob == None).all():
-                    db.session.delete(p)
-                db.session.commit()
+            # clear unsaved process_data
+            for p in ProcessData.query.filter(ProcessData.brewjob == None).all():
+                db.session.delete(p)
+            db.session.commit()
 
-                # init background thread
-                t = Timer(app.config['REFRESH_TIME'], background_thread, [self])
-                t.daemon = True
-                t.start()
+            # init background thread
+            t = Timer(app.config['REFRESH_TIME'], background_thread, [self])
+            t.daemon = True
+            t.start()
 
-        except OperationalError as e:
-            self._app.logger.error(e)
+    def load_recipe(self, recipe_id):
+        if self.running:
+            raise BrewControllerException(
+                'Can not load recipe. Another recipe is currently beeing '
+                'progressed.'
+            )
+
+        with self._app.app_context():
+            self.loaded_recipe = Receipe.query.get(recipe_id)
+            if self.loaded_recipe is None:
+                raise BrewControllerException(
+                    'There is no recipe with id {}.'.format(recipe_id)
+                )
+
+        self._loaded_recipe_id = recipe_id
+
+    def start(self):
+        if self.running:
+            raise BrewControllerException('Recipe already in progress.')
+        else:
+            self.running = True
 
     def shutdown(self):
         self._logger.debug('system is shutting down')

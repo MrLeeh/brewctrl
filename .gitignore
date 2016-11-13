@@ -8,3 +8,5 @@ venv
 migrations
 brewctrl.sublime-project
 styles.css
+.coverage
+htmlcov
