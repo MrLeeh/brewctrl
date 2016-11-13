@@ -40,8 +40,15 @@ class DeploymentConfig(Config):
         'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 
 
+class TestConfig(Config):
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + \
+                              os.path.join(basedir, 'data-test.sqlite')
+
+
 config = {
     'development': DevelopmentConfig,
     'deployment': DeploymentConfig,
-    'default': DevelopmentConfig
+    'default': DevelopmentConfig,
+    'testing': TestConfig
 }

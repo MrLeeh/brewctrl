@@ -5,17 +5,17 @@ copyright (c) 2016 by Stefan Lehmann,
 licensed under the MIT license
 
 """
-import os
-import logging
 import glob
+import logging
+import os
 import time
-from threading import Timer
 from datetime import datetime
+from threading import Timer
 
 import blinker
 from sqlalchemy.exc import OperationalError
 
-from . import db, socketio
+from . import db
 from .models import TempCtrlSettings, ProcessData, init_db
 
 # Hardware configuration
