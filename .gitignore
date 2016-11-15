@@ -10,3 +10,4 @@ brewctrl.sublime-project
 styles.css
 .coverage
 htmlcov
+doc/_build
