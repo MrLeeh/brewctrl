@@ -1,6 +1,6 @@
 import unittest
 from app import create_app, db, brew_controller
-from app.models import Receipe, Step
+from app.models import Recipe, Step
 from app.brewcontroller import BrewControllerException
 
 
@@ -12,7 +12,7 @@ class RecipeControllerTestCase(unittest.TestCase):
         self.app_context.push()
 
         # add recipe data
-        recipe = Receipe(
+        recipe = Recipe(
             name='Testrecipe',
             comment='testcommment'
         )
@@ -40,7 +40,7 @@ class RecipeControllerTestCase(unittest.TestCase):
 
     def test_load_recipe(self):
         # get first recipe
-        recipe = Receipe.query.first()
+        recipe = Recipe.query.first()
 
         # assign new recipe
         with self.assertRaises(BrewControllerException):

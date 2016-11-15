@@ -269,22 +269,22 @@
 
   <!-- Receipe Panel  -->
   <div class="col-md-8">
-    <div id="receipePanel" class="panel panel-default">
+    <div id="recipePanel" class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">
-          Aktuelles Rezept:{% if current_receipe %} {{ current_receipe.name }}{% endif %}
+          Aktuelles Rezept:{% if current_recipe %} {{ current_recipe.name }}{% endif %}
           <button class="btn btn-primary pull-right btn-xs">Run</button>
         </h3>
       </div>
       <div class="panel-body">
-      {% if current_receipe %}
+      {% if current_recipe %}
       <table class="table">
         <tr>
           <th>Schritt</th>
           <th>Temperatur</th>
           <th>Dauer</th>
         </tr>
-        {% for step in current_receipe.steps %}
+        {% for step in current_recipe.steps %}
         <tr>
           <td>{{ step.name }}</td>
           <td>{{ step.setpoint }} °C</td>

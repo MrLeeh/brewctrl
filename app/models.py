@@ -29,8 +29,10 @@ class State(Enum):
     SKIPPED = 4
 
 
-class Receipe(db.Model):
-    __tablename__ = 'receipes'
+class Recipe(db.Model):
+
+    __tablename__ = 'recipes'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
     comment = db.Column(db.Text())
@@ -39,6 +41,7 @@ class Receipe(db.Model):
 class Step(db.Model):
 
     __tablename__ = 'steps'
+
     id = db.Column(db.Integer, primary_key=True)
     order = db.Column(db.Integer())
     name = db.Column(db.String(80))
@@ -51,8 +54,8 @@ class Step(db.Model):
     state = State.INACTIVE
     start_time = None
     elapsed_time = timedelta()
-    receipe_id = db.Column(db.Integer, db.ForeignKey('receipes.id'))
-    receipe = db.relationship('Receipe', backref='steps')
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
+    recipe = db.relationship('Recipe', backref='steps')
 
     def __repr__(self):
         return '<Step object id:{id} name:{name}>'.format(
@@ -87,6 +90,7 @@ class Step(db.Model):
 class TempCtrlSettings(db.Model):
 
     __tablename__ = 'tempctrl_settings'
+
     id = db.Column(db.Integer, primary_key=True)
     setpoint = db.Column(db.Float, default=50.0)
     kp = db.Column(db.Float, default=10.0)
@@ -99,6 +103,7 @@ class TempCtrlSettings(db.Model):
 class ProcessData(db.Model, JsonifyMixin):
 
     __tablename__ = 'processdata'
+
     id = db.Column(db.Integer, primary_key=True)
     datetime = db.Column(db.DateTime, nullable=False)
     temp_setpoint = db.Column(db.Float())
@@ -119,14 +124,18 @@ class ProcessData(db.Model, JsonifyMixin):
 
 
 class BrewJob(db.Model):
+
     __tablename__ = 'brewjob'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
 
 
 def init_db():
+
     # init temp controller settings
     tempctrl_settings = TempCtrlSettings.query.first()
+
     if tempctrl_settings is None:
         tempctrl_settings = TempCtrlSettings()
         db.session.add(tempctrl_settings)

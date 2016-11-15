@@ -22,11 +22,11 @@
   <script type="text/javascript">
     $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
-    function insert_receipes($selectbox) {
-      $.get('/receipes/_list', function(data) {
-        var receipes = jQuery.parseJSON(data);
+    function insert_recipes($selectbox) {
+      $.get('/recipes/_list', function(data) {
+        var recipes = jQuery.parseJSON(data);
         $selectbox.find('option').remove();
-        $.each(receipes, function(index, value) {
+        $.each(recipes, function(index, value) {
           $selectbox.append(
             new Option(value.name, value.id)
           );
@@ -36,27 +36,27 @@
 
     $(document).ready(function() {
 
-      // load receipes on opening dialog
+      // load recipes on opening dialog
       $('#openReceipeDialog').on('shown.bs.modal', function() {
-        insert_receipes($('#openReceipeDialog select'))
+        insert_recipes($('#openReceipeDialog select'))
       });
 
-      // load receipes on openin the load dialog
+      // load recipes on openin the load dialog
       $('#loadReceipeDialog').on('shown.bs.modal', function() {
-        insert_receipes($('#loadReceipeDialog select'))
+        insert_recipes($('#loadReceipeDialog select'))
       });
 
 
-      // open receipe
+      // open recipe
       $('#openReceipeButton').click(function() {
-        receipe_id = $('#openReceipeDialog select').val()
-        location.href = $SCRIPT_ROOT + '/receipes/' + receipe_id;
+        recipe_id = $('#openReceipeDialog select').val()
+        location.href = $SCRIPT_ROOT + '/recipes/' + recipe_id;
       });
 
-      // load receipe
+      // load recipe
       $('#loadReceipeButton').click(function() {
-        receipe_id = $('#loadReceipeDialog select').val()
-        location.href = $SCRIPT_ROOT + '/receipes/load/' + receipe_id;
+        recipe_id = $('#loadReceipeDialog select').val()
+        location.href = $SCRIPT_ROOT + '/recipes/load/' + recipe_id;
       })
 
     });
@@ -93,7 +93,7 @@
     </div>
   </div>
 
-  <!--modal dialog for editing a receipe-->
+  <!--modal dialog for editing a recipe-->
 
   <div id="openReceipeDialog" class="modal fade" tabindex=-1 role="dialog">
     <div class="modal-dialog" role="document">
@@ -116,7 +116,7 @@
     </div>
   </div>
 
-  <!--modal dialog for loading a receipe-->
+  <!--modal dialog for loading a recipe-->
 
   <div id="loadReceipeDialog" class="modal fade" tabindex=-1 role="dialog">
     <div class="modal-dialog" role="document">

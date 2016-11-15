@@ -1,4 +1,4 @@
-from ..models import Receipe, Step
+from ..models import Recipe, Step
 from flask_wtf import Form
 from wtforms import StringField, DecimalField, SubmitField, SelectField, \
     IntegerField, TextAreaField
@@ -9,10 +9,10 @@ class MainForm(Form):
     setpoint = DecimalField("Sollwert:", places=1)
 
 
-class ReceipeForm(Form):
+class RecipeForm(Form):
     name = StringField('Rezeptname:',
                        validators=[DataRequired(),
-                                   Length(1, Receipe.name.type.length)])
+                                   Length(1, Recipe.name.type.length)])
     comment = TextAreaField('Kommentar:', render_kw={'rows': 10})
     submit = SubmitField('OK')
 

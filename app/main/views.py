@@ -4,10 +4,10 @@ from itertools import islice
 from . import main
 from flask import request, render_template, redirect, url_for, jsonify, \
     current_app
-from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm, StepForm
+from .forms import MainForm, RecipeForm, TempCtrlSettingsForm, StepForm
 from .. import socketio, db, brew_controller
 from ..brewcontroller import new_processdata
-from ..models import ProcessData, Receipe, Step, TempCtrlSettings
+from ..models import ProcessData, Recipe, Step, TempCtrlSettings
 
 
 def handle_new_processdata(pd):
@@ -18,7 +18,7 @@ def handle_new_processdata(pd):
 
 new_processdata.connect(handle_new_processdata)
 actual_processdata = None
-current_receipe_id = -1
+current_recipe_id = -1
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -54,56 +54,58 @@ def index():
         graph_data['temp_setpoint'].append(p.temp_setpoint)
         graph_data['power'].append(p.tempctrl_power)
 
-    # is there a current receipe?
-    global current_receipe_id
-    if current_receipe_id is None:
-        current_receipe = None
+    # is there a current recipe?
+    global current_recipe_id
+    if current_recipe_id is None:
+        current_recipe = None
     else:
-        current_receipe = Receipe.query.get(current_receipe_id)
+        current_recipe = Recipe.query.get(current_recipe_id)
 
     return render_template(
         'index.html', form=form, processdata=actual_processdata,
-        graph_data=graph_data, current_receipe=current_receipe
+        graph_data=graph_data, current_recipe=current_recipe
     )
 
 
-@main.route('/receipes/create', methods=['GET', 'POST'])
-def create_receipe():
-    form = ReceipeForm()
-    receipe = Receipe()
+@main.route('/recipes/create', methods=['GET', 'POST'])
+def create_recipe():
+    form = RecipeForm()
+
+    recipe = Recipe()
+    db.session.add(recipe)
+    db.session.flush()
 
     if form.validate_on_submit():
-        receipe.name = form.name.data
-        db.session.add(receipe)
+        recipe.name = form.name.data
+        db.session.add(recipe)
         db.session.commit()
 
         return redirect(url_for('main.index'))
 
-    return render_template('receipes/add.html', form=form,
-                           receipe=receipe,
+    return render_template('recipes/add.html', form=form,
+                           recipe=recipe,
                            processdata=actual_processdata)
 
 
-@main.route('/receipes/<receipe_id>', methods=['GET', 'POST'])
-def edit_receipe(receipe_id):
+@main.route('/recipes/<recipe_id>', methods=['GET', 'POST'])
+def edit_recipe(recipe_id):
 
-    receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
-    form = ReceipeForm(obj=receipe)
+    recipe = Recipe.query.filter(Recipe.id == recipe_id).first_or_404()
+    form = RecipeForm(obj=recipe)
 
     if form.validate_on_submit():
-        receipe.name = form.name.data
-        db.session.add(receipe)
+        recipe.name = form.name.data
+        db.session.add(recipe)
         db.session.commit()
         return redirect(url_for('main.index'))
 
-    return render_template('receipes/edit.html', form=form,
-                           receipe=receipe,
-                           processdata=actual_processdata)
+    return render_template('recipes/edit.html', form=form,
+                           recipe=recipe, processdata=actual_processdata)
 
 
-@main.route('/receipes/<receipe_id>/steps/create', methods=['GET', 'POST'])
-def create_step(receipe_id):
-    receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
+@main.route('/recipes/<recipe_id>/steps/create', methods=['GET', 'POST'])
+def create_step(recipe_id):
+    recipe = Recipe.query.filter(Recipe.id == recipe_id).first_or_404()
     form = StepForm()
 
     # add template choices
@@ -113,7 +115,7 @@ def create_step(receipe_id):
 
     if form.validate_on_submit():
         step = Step()
-        step.receipe = receipe
+        step.recipe = recipe
         step.name = form.name.data
         step.setpoint = int(form.setpoint.data)
         step.duration = int(form.duration.data)
@@ -172,36 +174,36 @@ def tempcontroller_settings():
                            processdata=actual_processdata)
 
 
-@main.route('/receipes/_list')
-def ajax_list_receipes():
-    receipes = Receipe.query.all()
-    receipe_list = []
-    for receipe in receipes:
-        receipe_list.append(dict(id=receipe.id, name=receipe.name))
-    return json.dumps(receipe_list)
+@main.route('/recipes/_list')
+def ajax_list_recipes():
+    recipes = Recipe.query.all()
+    recipe_list = []
+    for recipe in recipes:
+        recipe_list.append(dict(id=recipe.id, name=recipe.name))
+    return json.dumps(recipe_list)
 
 
-@main.route('/receipes/load/<receipe_id>')
-def load_receipe(receipe_id):
-    receipe = Receipe.query.filter_by(id=receipe_id).first()
-    global current_receipe_id
-    if receipe is None:
-        current_receipe_id = -1
+@main.route('/recipes/load/<recipe_id>')
+def load_recipe(recipe_id):
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    global current_recipe_id
+    if recipe is None:
+        current_recipe_id = -1
     else:
-        current_receipe_id = receipe_id
+        current_recipe_id = recipe_id
 
     return redirect(url_for('main.index'))
 
 
-@main.route('/receipes/_add_step', methods=['POST'])
+@main.route('/recipes/_add_step', methods=['POST'])
 def ajax_add_step():
-    receipe_id = int(request.form['receipe_id'])
-    receipe = Receipe.query.filter_by(id=receipe_id).first()
-    if receipe is None:
+    recipe_id = int(request.form['recipe_id'])
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe is None:
         return '{"status": "error"}'
 
     step = Step()
-    step.receipe = receipe
+    step.recipe = recipe
     step.name = request.form['name']
     step.setpoint = request.form['setpoint']
     step.duration = request.form['duration']
@@ -229,7 +231,7 @@ def ajax_get_step_data(step_id):
 
 
 @main.route('/steps/add', methods=['GET', 'POST'])
-def add_step(receipe_id):
+def add_step(recipe_id):
     pass
 
 

@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 
 from . import db
 from .hardware import TempController, Mixer, simulation_mode
-from .models import TempCtrlSettings, ProcessData, init_db, Receipe
+from .models import TempCtrlSettings, ProcessData, init_db, Recipe
 
 
 # blinker signal for new processdata
@@ -56,6 +56,11 @@ class BrewController:
             self.init_app()
 
     def init_app(self, app):
+        """
+        :ivar mixer:
+        :param app:
+        :return:
+        """
 
         self._app = app
         self._logger = self._app.logger
@@ -66,21 +71,28 @@ class BrewController:
         self.running = False
         self.loaded_recipe = None
 
-        with self._app.app_context():
-            init_db()
+        try:
 
-            # init the temperature controller
-            self.temperature_controller.load_settings()
+            with self._app.app_context():
 
-            # clear unsaved process_data
-            for p in ProcessData.query.filter(ProcessData.brewjob == None).all():
-                db.session.delete(p)
-            db.session.commit()
+                init_db()
 
-            # init background thread
-            t = Timer(app.config['REFRESH_TIME'], background_thread, [self])
-            t.daemon = True
-            t.start()
+                # init the temperature controller
+                self.temperature_controller.load_settings()
+
+                # clear unsaved process_data
+                for p in ProcessData.query.filter(ProcessData.brewjob == None).all():
+                    db.session.delete(p)
+                db.session.commit()
+
+                # init background thread
+                t = Timer(app.config['REFRESH_TIME'], background_thread, [self])
+                t.daemon = True
+                t.start()
+
+        except OperationalError as e:
+
+            self._logger.warning(str(e))
 
     def load_recipe(self, recipe_id):
         if self.running:
@@ -90,7 +102,7 @@ class BrewController:
             )
 
         with self._app.app_context():
-            self.loaded_recipe = Receipe.query.get(recipe_id)
+            self.loaded_recipe = Recipe.query.get(recipe_id)
             if self.loaded_recipe is None:
                 raise BrewControllerException(
                     'There is no recipe with id {}.'.format(recipe_id)

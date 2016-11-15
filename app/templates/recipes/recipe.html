@@ -55,7 +55,7 @@
 
     // add step button opens modal containing step form loaded via ajax
     $('#addStepButton').click(function() {
-      var url = "{{ url_for('main.create_step', receipe_id=receipe.id) }}";
+      var url = "{{ url_for('main.create_step', recipe_id=recipe.id) }}";
       $.get(url, function(data) {
         $('#stepDialog .modal-content').html(data);
         $('#stepDialog').modal();
@@ -133,7 +133,7 @@
                 </tr>
               </thead>
               <tbody>
-                {% for step in receipe.steps %}
+                {% for step in recipe.steps %}
                 <tr id="step{{ step.id }}">
                   <td><a id="step-name" href="" data-step-id="{{ step.id }}">{{ step.name }}</a></td>
                   <td align="center">{{ "{:.0f} °C".format(step.setpoint) }}</td>

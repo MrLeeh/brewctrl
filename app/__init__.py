@@ -5,7 +5,6 @@ from flask_socketio import SocketIO
 from config import config
 
 
-
 bootstrap = Bootstrap()
 socketio = SocketIO()
 db = SQLAlchemy()
@@ -23,8 +22,9 @@ def create_app(config_name):
     socketio.init_app(app)
     db.init_app(app)
 
-    with app.app_context():
-        db.create_all()
+    if config_name == 'testing':
+        with app.app_context():
+            db.create_all()
 
     if app.debug:
         from flaskext.lesscss import lesscss
