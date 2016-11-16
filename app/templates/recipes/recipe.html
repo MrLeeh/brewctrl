@@ -41,7 +41,7 @@
       $.post(url, data=$('#stepForm').serialize(), function(data) {
         if (data.status == 'ok') {
           $('#stepDialog').modal('hide');
-          location.reload();
+            location.reload();
         }
         else {
           $('#stepDialog .modal-content').html(data);

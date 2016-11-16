@@ -46,6 +46,12 @@
         insert_recipes($('#loadReceipeDialog select'))
       });
 
+      // create recipe
+      $('#createRecipeForm').submit(function(event) {
+        event.preventDefault();
+        var recipe_name = $('#createRecipeDialog input').val()
+        location.href = $SCRIPT_ROOT + '/recipes/create?name=' + recipe_name;
+      });
 
       // open recipe
       $('#openReceipeButton').click(function() {
@@ -92,6 +98,34 @@
       </div>
     </div>
   </div>
+
+  <!--modal dialog for creating a recipe-->
+
+  <div id="createRecipeDialog" class="modal fade" tabindex=-1 role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form id="createRecipeForm" class="form">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">Neues Rezept anlegen</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="createRecipeInput">Rezeptname:</label>
+              <input type="text" class="form-control" id="createRecipeInput" value="Neues Rezept">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+            <input type="submit" class="btn btn-primary" id="createRecipeButton" value="OK"></input>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 
   <!--modal dialog for editing a recipe-->
 

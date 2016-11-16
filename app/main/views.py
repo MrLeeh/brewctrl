@@ -67,24 +67,17 @@ def index():
     )
 
 
-@main.route('/recipes/create', methods=['GET', 'POST'])
+@main.route('/recipes/create')
 def create_recipe():
+
     form = RecipeForm()
 
     recipe = Recipe()
+    recipe.name = request.args['name'] or 'Neues Rezept'
     db.session.add(recipe)
-    db.session.flush()
+    db.session.commit()
 
-    if form.validate_on_submit():
-        recipe.name = form.name.data
-        db.session.add(recipe)
-        db.session.commit()
-
-        return redirect(url_for('main.index'))
-
-    return render_template('recipes/add.html', form=form,
-                           recipe=recipe,
-                           processdata=actual_processdata)
+    return redirect(url_for('.edit_recipe', recipe_id=recipe.id))
 
 
 @main.route('/recipes/<recipe_id>', methods=['GET', 'POST'])
@@ -105,7 +98,6 @@ def edit_recipe(recipe_id):
 
 @main.route('/recipes/<recipe_id>/steps/create', methods=['GET', 'POST'])
 def create_step(recipe_id):
-    recipe = Recipe.query.filter(Recipe.id == recipe_id).first_or_404()
     form = StepForm()
 
     # add template choices
@@ -115,7 +107,7 @@ def create_step(recipe_id):
 
     if form.validate_on_submit():
         step = Step()
-        step.recipe = recipe
+        step.recipe_id = recipe_id
         step.name = form.name.data
         step.setpoint = int(form.setpoint.data)
         step.duration = int(form.duration.data)
@@ -123,6 +115,7 @@ def create_step(recipe_id):
         db.session.add(step)
         db.session.commit()
         return jsonify(status='ok')
+
     return render_template('steps/add.html', form=form)
 
 
