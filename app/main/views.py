@@ -86,7 +86,13 @@ def edit_recipe(recipe_id):
     recipe = Recipe.query.filter(Recipe.id == recipe_id).first_or_404()
     form = RecipeForm(obj=recipe)
 
+    if 'delete' in request.args:
+        db.session.delete(recipe)
+        db.session.commit()
+        return redirect(url_for('main.index'))
+
     if form.validate_on_submit():
+
         recipe.name = form.name.data
         db.session.add(recipe)
         db.session.commit()

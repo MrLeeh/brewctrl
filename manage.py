@@ -75,5 +75,10 @@ def coverage():
     cov.report()
 
 
+@manager.command
+def init_data():
+    from init_data import init_data
+    init_data(app)
+
 if __name__ == '__main__':
     manager.run()

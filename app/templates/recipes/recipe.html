@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'common.html' import edit_field %}
+{% from 'common.html' import edit_field, modal %}
 {% from 'navbar.html' import navbar %}
 
 {% block navbar %}
@@ -94,8 +94,30 @@
 
 {% block main %}
 <div id="stepDialog" class="modal fade" tabindex=-1 role="dialog">
+<div class="modal-dialog" role="document">
+  <div class="modal-content">
+  </div>
+</div>
+</div>
+
+<div id="deleteRecipeDialog" class="modal fade" tabindex=-1 role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Rezept entfernen</h4>
+      </div>
+      <div class="modal-body">
+        Möchtest Du das Rezept wirklich entfernen?
+      </div>
+      <div class="modal-footer">
+        <form>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+          <input type="submit" name="delete" class="btn btn-primary" value="OK">
+        </form>
+      </div>
     </div>
   </div>
 </div>
@@ -152,9 +174,11 @@
         {{ edit_field(form.comment) }}
       </div>
     </div>
-    {{ form.submit(class='btn') }} oder <a href="{{ url_for('main.index') }}">Abbrechen</a>
+    <a href="" class="btn btn-danger" data-toggle="modal" data-target="#deleteRecipeDialog">Entfernen</a>
+    <div class="pull-right">
+      {{ form.submit(class='btn') }} oder <a href="{{ url_for('main.index') }}">Abbrechen</a>
+    </div>
+    <p></p>
   </form>
-</div>
-<div class="test">
 </div>
 {% endblock %}

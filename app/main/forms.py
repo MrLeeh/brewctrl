@@ -15,6 +15,7 @@ class RecipeForm(Form):
                                    Length(1, Recipe.name.type.length)])
     comment = TextAreaField('Kommentar:', render_kw={'rows': 10})
     submit = SubmitField('OK')
+    delete = SubmitField('Entfernen')
 
 
 class TempCtrlSettingsForm(Form):

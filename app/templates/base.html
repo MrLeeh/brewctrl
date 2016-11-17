@@ -23,14 +23,28 @@
     $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
     function insert_recipes($selectbox) {
+
+      // get a list of all recipes from the server
       $.get('/recipes/_list', function(data) {
-        var recipes = jQuery.parseJSON(data);
+
+        // remove old items
         $selectbox.find('option').remove();
-        $.each(recipes, function(index, value) {
-          $selectbox.append(
-            new Option(value.name, value.id)
-          );
-        });
+
+        var recipes = jQuery.parseJSON(data);
+
+        // check for recipes
+        if ( recipes.length > 0) {
+          $.each(recipes, function (index, value) {
+            $selectbox.append(
+                new Option(value.name, value.id)
+            );
+          });
+        }
+        else {
+          $parent = $selectbox.parent();
+          $selectbox.hide();
+          $parent.text('Es sind noch keine Rezepte vorhanden.');
+        }
       });
     };
 

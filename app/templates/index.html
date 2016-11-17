@@ -181,6 +181,12 @@
     // resize plotly with window
     $(window).resize(function() {
       Plotly.Plots.resize(graph);
+      var width = $('#img-animation').width();
+      var height = $('#img-animation').height();
+
+      // gauge position
+      $('#gauge').css('top', 0 + 'px');
+      $('#gauge').css('left', width + 'px');
     });
 
     // image size and gauge initialisation
@@ -267,7 +273,7 @@
     </div>
   </div>
 
-  <!-- Receipe Panel  -->
+  <!-- Recipe Panel  -->
   <div class="col-md-8">
     <div id="recipePanel" class="panel panel-default">
       <div class="panel-heading">
