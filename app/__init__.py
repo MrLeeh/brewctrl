@@ -26,10 +26,6 @@ def create_app(config_name):
         with app.app_context():
             db.create_all()
 
-    if app.debug:
-        from flaskext.lesscss import lesscss
-        lesscss(app)
-
     # init control
     brew_controller.init_app(app)
 

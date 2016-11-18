@@ -56,6 +56,7 @@ class Step(db.Model):
     elapsed_time = timedelta()
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
     recipe = db.relationship('Recipe', backref='steps')
+    confirm_to_continue = db.Column(db.Boolean(), default=False)
 
     def __repr__(self):
         return '<Step object id:{id} name:{name}>'.format(

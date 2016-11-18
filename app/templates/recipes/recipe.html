@@ -151,6 +151,7 @@
                   <th>Schritt</th>
                   <th>Temperatur</th>
                   <th>Dauer</th>
+                  <th></th>
                   <th>Kommentar</th>
                 </tr>
               </thead>
@@ -160,6 +161,7 @@
                   <td><a id="step-name" href="" data-step-id="{{ step.id }}">{{ step.name }}</a></td>
                   <td align="center">{{ "{:.0f} °C".format(step.setpoint) }}</td>
                   <td align="center">{{ "{} Min.".format(step.duration) }}</td>
+                  <td>{% if step.confirm_to_continue %}<i class="fa fa-hand-o-up" aria-hidden="true"></i>{% endif %}</td>
                   <td class="ellipsis" align="left">{% if not step.comment %}-{% else %}{{ step.comment }}{% endif %}</td>
                 </tr>
                 {% endfor %}

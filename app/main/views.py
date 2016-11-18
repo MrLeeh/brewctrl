@@ -44,7 +44,8 @@ def index():
     # if datapoints more then only a point each minute
     datapoint_count = datapoint_query.count()
     datapoint_iterator = iter(datapoint_query)
-    current_app.logger.debug('current datapoint count: {}'.format(datapoint_count))
+    current_app.logger.debug(
+        'current datapoint count: {}'.format(datapoint_count))
     if datapoint_count > 3600:
         datapoint_iterator = islice(datapoint_iterator, 0, None, 60)
 
@@ -69,9 +70,6 @@ def index():
 
 @main.route('/recipes/create')
 def create_recipe():
-
-    form = RecipeForm()
-
     recipe = Recipe()
     recipe.name = request.args['name'] or 'Neues Rezept'
     db.session.add(recipe)
@@ -82,7 +80,6 @@ def create_recipe():
 
 @main.route('/recipes/<recipe_id>', methods=['GET', 'POST'])
 def edit_recipe(recipe_id):
-
     recipe = Recipe.query.filter(Recipe.id == recipe_id).first_or_404()
     form = RecipeForm(obj=recipe)
 
@@ -92,7 +89,6 @@ def edit_recipe(recipe_id):
         return redirect(url_for('main.index'))
 
     if form.validate_on_submit():
-
         recipe.name = form.name.data
         db.session.add(recipe)
         db.session.commit()
@@ -140,6 +136,7 @@ def edit_step(step_id):
         step.setpoint = int(form.setpoint.data)
         step.duration = int(form.duration.data)
         step.comment = form.comment.data
+        step.confirm_to_continue = bool(form.confirm_to_continue.data)
         db.session.add(step)
         db.session.commit()
         return jsonify(status='ok')
@@ -169,7 +166,7 @@ def tempcontroller_settings():
         db.session.commit()
         brew_controller.temperature_controller.load_settings()
         return redirect(url_for('main.index'))
-    return render_template('settings/temperature_controller.html', form=form,
+    return render_template('settings/tempcontroller.html', form=form,
                            processdata=actual_processdata)
 
 
@@ -230,19 +227,19 @@ def ajax_get_step_data(step_id):
 
 
 @main.route('/steps/add', methods=['GET', 'POST'])
-def add_step(recipe_id):
+def add_step():
     pass
 
 
 @socketio.on('enable_tempctrl')
-def handle_enable_tempctrl(json):
-    enabled = json['data']
+def handle_enable_tempctrl(json_):
+    enabled = json_['data']
     brew_controller.temperature_controller.enabled = enabled
 
 
 @socketio.on('enable_mixer')
-def handle_enable_mixer(json):
-    enabled = json['data']
+def handle_enable_mixer(json_):
+    enabled = json_['data']
     brew_controller.mixer.enabled = enabled
 
 

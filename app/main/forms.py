@@ -1,7 +1,7 @@
 from ..models import Recipe, Step
 from flask_wtf import Form
 from wtforms import StringField, DecimalField, SubmitField, SelectField, \
-    IntegerField, TextAreaField
+    IntegerField, TextAreaField, BooleanField
 from wtforms.validators import Length, DataRequired, NumberRange
 
 
@@ -42,6 +42,11 @@ class StepForm(Form):
     duration = IntegerField(
         'Dauer:', validators=[DataRequired(),
                               NumberRange(1, 500)]
+    )
+
+    # confirm to continue
+    confirm_to_continue = BooleanField(
+        'Zum Fortfahren bestätigen'
     )
 
     # comment
