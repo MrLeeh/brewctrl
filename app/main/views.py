@@ -6,18 +6,9 @@ from flask import request, render_template, redirect, url_for, jsonify, \
     current_app
 from .forms import MainForm, RecipeForm, TempCtrlSettingsForm, StepForm
 from .. import socketio, db, brew_controller
-from ..brewcontroller import new_processdata
 from ..models import ProcessData, Recipe, Step, TempCtrlSettings
 
 
-def handle_new_processdata(pd):
-    global actual_processdata
-    actual_processdata = pd
-    socketio.emit('process_data', pd)
-
-
-new_processdata.connect(handle_new_processdata)
-actual_processdata = None
 current_recipe_id = -1
 
 
@@ -33,7 +24,7 @@ def index():
         form.setpoint.data = temperature_controller.setpoint
 
     # get datapoints
-    datapoint_query = ProcessData.query.filter(ProcessData.brewjob is None)
+    datapoint_query = ProcessData.query.filter(ProcessData.brewjob==None)
     graph_data = dict(
         time=[],
         temp=[],
@@ -63,7 +54,8 @@ def index():
         current_recipe = Recipe.query.get(current_recipe_id)
 
     return render_template(
-        'index.html', form=form, processdata=actual_processdata,
+        'index.html', form=form,
+        processdata=brew_controller.process_data.jsonify(),
         graph_data=graph_data, current_recipe=current_recipe
     )
 
@@ -95,7 +87,8 @@ def edit_recipe(recipe_id):
         return redirect(url_for('main.index'))
 
     return render_template('recipes/edit.html', form=form,
-                           recipe=recipe, processdata=actual_processdata)
+                           recipe=recipe,
+                           processdata=brew_controller.process_data.jsonify())
 
 
 @main.route('/recipes/<recipe_id>/steps/create', methods=['GET', 'POST'])
@@ -167,7 +160,7 @@ def tempcontroller_settings():
         brew_controller.temperature_controller.load_settings()
         return redirect(url_for('main.index'))
     return render_template('settings/tempcontroller.html', form=form,
-                           processdata=actual_processdata)
+                           processdata=brew_controller.process_data.jsonify())
 
 
 @main.route('/recipes/_list')

@@ -1,12 +1,11 @@
 import os
 import blinker
 import datetime
-from threading import Timer
 from sqlalchemy.exc import OperationalError
 
-from . import db
+from . import db, socketio
 from .hardware import TempController, Mixer, simulation_mode
-from .models import TempCtrlSettings, ProcessData, init_db, Recipe
+from .models import ProcessData, init_db, Recipe
 
 
 # blinker signal for new processdata
@@ -14,54 +13,52 @@ new_processdata = blinker.signal('new processdata')
 
 
 class BrewControllerException(Exception):
-    """ Exception occured during brew control handling """
+    """ Exception occurred during brew control handling """
     pass
 
 
 def background_thread(brewcontroller):
-    actual_time = datetime.datetime.now()
 
-    # create a new timer and call it
-    t = Timer(
-        brewcontroller._app.config['REFRESH_TIME'],
-        background_thread, args=[brewcontroller])
-    t.daemon = True
-    t.start()
-
+    refresh_time = brewcontroller._app.config['REFRESH_TIME']
     temperature_controller = brewcontroller.temperature_controller
     mixer = brewcontroller.mixer
-    with brewcontroller._app.app_context():
 
-        temperature_controller.process(actual_time)
+    while 1:
+        # sleep for the given refresh time
+        socketio.sleep(refresh_time)
 
-        process_data = ProcessData()
-        process_data.datetime = actual_time
-        process_data.temp_setpoint = temperature_controller.setpoint
-        process_data.temp_actual = temperature_controller.temp
-        process_data.tempctrl_active = temperature_controller.active
-        process_data.tempctrl_power = temperature_controller.power
-        process_data.tempctrl_output = temperature_controller.output
-        process_data.heater_enabled = temperature_controller.heater_enabled
-        process_data.mixer_enabled = mixer.enabled
-        db.session.add(process_data)
-        db.session.commit()
+        # read current time
+        actual_time = datetime.datetime.now()
 
-        new_processdata.send(process_data.jsonify())
+        with brewcontroller._app.app_context():
+
+            temperature_controller.process(actual_time)
+
+            process_data = ProcessData()
+            process_data.datetime = actual_time
+            process_data.temp_setpoint = temperature_controller.setpoint
+            process_data.temp_actual = temperature_controller.temp
+            process_data.tempctrl_active = temperature_controller.active
+            process_data.tempctrl_power = temperature_controller.power
+            process_data.tempctrl_output = temperature_controller.output
+            process_data.heater_enabled = temperature_controller.heater_enabled
+            process_data.mixer_enabled = mixer.enabled
+
+            # save to database
+            db.session.add(process_data)
+            db.session.commit()
+
+            brewcontroller.process_data = process_data
+            socketio.emit('process_data', process_data.jsonify())
 
 
 class BrewController:
 
     def __init__(self, app=None):
         if app is not None:
-            self.init_app()
+            self.init_app(app)
 
     def init_app(self, app):
-        """
-        :ivar mixer:
-        :param app:
-        :return:
-        """
-
         self._app = app
         self._logger = self._app.logger
         self._loaded_recipe_id = -1
@@ -70,13 +67,12 @@ class BrewController:
         self.mixer = Mixer()
         self.running = False
         self.loaded_recipe = None
+        self.process_data = None
 
         try:
-
             with self._app.app_context():
 
                 init_db()
-
                 # init the temperature controller
                 self.temperature_controller.load_settings()
 
@@ -86,9 +82,7 @@ class BrewController:
                 db.session.commit()
 
                 # init background thread
-                t = Timer(app.config['REFRESH_TIME'], background_thread, [self])
-                t.daemon = True
-                t.start()
+                socketio.start_background_task(background_thread, self)
 
         except OperationalError as e:
 

@@ -41,7 +41,9 @@
 
     // diagram init
     var graph = $('#trendDiv').get(0);
-    var graph_data = {{ graph_data | tojson }}
+    var graph_data = {{ graph_data | tojson }};
+
+
 
     data.time = graph_data.time;
     data.temp = graph_data.temp;
