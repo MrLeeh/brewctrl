@@ -17,8 +17,8 @@ from flask_migrate import Migrate, MigrateCommand
 
 # only perform monkey patch in run mode otherwise
 # shell won't be usable
-if 'run' in sys.argv:
-    eventlet.monkey_patch()
+# if 'run' in sys.argv:
+eventlet.monkey_patch()
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 manager = Manager(app)
@@ -36,7 +36,7 @@ manager.add_command('db', MigrateCommand)
 
 
 @manager.command
-def run(host='0.0.0.0', port=5000, user_reloader=False):
+def run(host='0.0.0.0', port=5000, use_reloader=False):
     """
     Run the Flask development server with websocket support.
 
@@ -47,7 +47,7 @@ def run(host='0.0.0.0', port=5000, user_reloader=False):
         app,
         host=host,
         port=port,
-        use_reloader=user_reloader
+        use_reloader=use_reloader
     )
 
 

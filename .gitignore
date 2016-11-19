@@ -12,3 +12,4 @@ styles.css
 htmlcov
 doc/_build
 app/static/bower_components
+experimental
