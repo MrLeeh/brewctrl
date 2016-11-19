@@ -11,3 +11,4 @@ styles.css
 .coverage
 htmlcov
 doc/_build
+app/static/bower_components
