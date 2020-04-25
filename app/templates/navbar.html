@@ -1,10 +1,10 @@
-{% macro navbar(tempctrl_active) %}
-
+{% macro navbar(processdata) %}
 <script>
   $(document).ready(function() {
     var socket = io.connect('http://' + document.domain + ':' + location.port);
 
-    if ("{{ tempctrl_active }}" == "True") {
+    // Tempctrl active
+    if ("{{ processdata.tempctrl_active }}" == "True") {
       $('#nav-btn-tempctrl-active').addClass('btn-success');
     }
 
@@ -15,6 +15,11 @@
       socket.emit('enable_tempctrl', {'data': active});
     });
 
+    // Mixer active
+    if ("{{ processdata.mixer_active }}" == "True") {
+      $('#nav-btn-mixer-active').addClass('btn-success');
+    }
+
     $('#nav-btn-mixer-active').click(function() {
       $(this).toggleClass('btn-success');
 
@@ -22,19 +27,44 @@
       socket.emit('enable_mixer', {'data': active});
     })
 
+    $('#shutdownButton').click(function() {
+      socket.emit('shutdown');
+    });
+
     socket.on('process_data', function(data) {
-      var datetime = data.time.split(' ');
+      var datetime = data.datetime.split(' ');
       var date = datetime[0].split('-');
       date = date[2] + '.' + date[1] + '.' + date[0];
       var time = datetime[1].split('.')[0];
 
       $('#nav-clock').text(date + ' ' + time);
+
+      if (data.tempctrl_active) {
+        $('#nav-btn-tempctrl-active').addClass('btn-success');
+      }
+      else {
+        $('#nav-btn-tempctrl-active').removeClass('btn-success');
+      }
+
+      if (data.mixer_enabled) {
+        $('#nav-btn-mixer-active').addClass('btn-success');
+      }
+      else {
+        $('#nav-btn-mixer-active').removeClass('btn-success');
+      }
     });
   });
 </script>
 
 <ul class="nav navbar-nav navbar-left">
-  <li id="nav_home"><a href="{{ url_for('index') }}">Home</a></li>
+  <li class="drowdown">
+    <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Braurezept<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li id="newReceipeButton"><a href="{{ url_for('main.create_receipe') }}">Neues Rezept erstellen...</a></li>
+      <li role="separator" class="divider"></li>
+      <li id="editReceipeButton"><a href="" data-toggle="modal" data-target="#openReceipeDialog">Rezept öffnen...</a></li>
+    </ul>
+  </li>
 
   <li class="dropdown">
     <a id="nav-progress" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
@@ -42,7 +72,7 @@
       <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
-      <li><a href="{{ url_for('measurement_data') }}">Anzeigen</a></li>
+      <li><a href="">Anzeigen</a></li>
       <li role="separator" class="divider"></li>
       <li><a href="#">Laden...</a></li>
       <li><a href="#">Speichern...</a></li>
@@ -52,21 +82,23 @@
       <li class="disabled"><a href="#">Aufzeichnung stoppen</a></li>
     </ul>
   </li>
-
-  <li class="drowdown">
-    <a href="#" class="drowdown-toggle" data-toggle="dropdown" role="button">Einstellungen<span class="caret"></span></a>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
+      Einstellungen
+      <span class="caret"></span>
+    </a>
     <ul class="dropdown-menu">
-      <li id="nav-edit-steps"><a href="{{ url_for('steps') }}">Schritte bearbeiten</a></li>
-      <li id="nav-tempctrl"><a href="{{ url_for('tempctrl_settings') }}">Temperaturregelung</a></li>
+      <li><a href="{{ url_for('main.tempcontroller_settings') }}">Temperaturregler</a></li>
     </ul>
   </li>
-
+  <li role="separator" class="divider"></li>
   <li><button id="nav-btn-tempctrl-active" class="btn navbar-btn">Temperaturregler</button></li>
-
   <li><button id="nav-btn-mixer-active" class="btn navbar-btn">Rührwerk</button></li>
 </ul>
+
 <ul class="nav navbar-nav navbar-right">
   <li><a id="nav-clock">Uhrzeit</a></li>
+  <li><a id="showShutdownDialogButton" href="" data-toggle="modal" data-target="#shutdownDialog"><span class="glyphicon glyphicon-off"></span></a></li>
 </ul>
 
 {% endmacro %}

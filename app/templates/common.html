@@ -1,12 +1,10 @@
 {% macro edit_field(field) %}
   <div class="form-group {% if field.errors %} error{% endif %} {{ field.name }}">
-    {{ field.label(class="control-label col-md-offset-1 col-md-4") }}
-    <div class="col-sm-6">
-      {{ field(class="form-control", **kwargs) }}
-      {% for error in field.errors %}
-       <span class="help-inline">{{ error }}</span>
-      {% endfor %}
-    </div>
+    {{ field.label(class="control-label") }}
+    {{ field(class="form-control", **kwargs) }}
+    {% for error in field.errors %}
+     <span class="help-inline">{{ error }}</span>
+    {% endfor %}
   </div>
 {% endmacro %}
 

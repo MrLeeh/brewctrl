@@ -25,14 +25,14 @@ app.config.from_object('brewctrl.config')
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-from .models import TempCtrl as TempCtrlSettings, Step
+from .models import TempCtrlSettings as TempCtrlSettings, Step
 
 # temperature controller
 from .control import TempController, set_mixer_output 
-tempctrl_settings = db.session.query(TempCtrlSettings).first()
+tempctrl_settings = db.session.query(TempCtrlSettings1).first()
 
 if tempctrl_settings is None:
-    tempctrl_settings = TempCtrlSettings()
+    tempctrl_settings = TempCtrlSettings1()
     db.session.add(tempctrl_settings)
     db.session.commit()
 
@@ -88,7 +88,7 @@ def get_steps():
 def background_thread():
     cur_time = datetime.now()
 
-    # restart timer
+    # restart duration
     t = Timer(REFRESH_TIME, background_thread)
     t.daemon = True
     t.start()
@@ -140,7 +140,7 @@ def index():
 
 @app.route('/tempctrl-settings', methods=['GET', 'POST'])
 def tempctrl_settings():
-    tempctrl_settings = db.session.query(TempCtrlSettings).first()
+    tempctrl_settings = db.session.query(TempCtrlSettings1).first()
     form = TempForm(request.form, obj=tempctrl_settings)
     form.setpoint.data = tempctrl.setpoint
 

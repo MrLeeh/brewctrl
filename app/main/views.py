@@ -1,0 +1,156 @@
+import logging
+import json
+from itertools import islice
+
+from . import main
+from flask import request, render_template, redirect, url_for
+from .forms import MainForm, ReceipeForm, TempCtrlSettingsForm
+from .. import socketio, db
+from ..control import new_processdata, tempcontroller, mixer, shutdown
+from ..models import ProcessData, Receipe, Step, TempCtrlSettings
+
+
+def handle_new_processdata(pd):
+    global actual_processdata
+    actual_processdata = pd
+    socketio.emit('process_data', pd)
+
+
+logger = logging.getLogger('brewctrl.main.views')
+new_processdata.connect(handle_new_processdata)
+actual_processdata = None
+
+
+@main.route('/', methods=['GET', 'POST'])
+@main.route('/index', methods=['GET', 'POST'])
+def index():
+    form = MainForm()
+    if form.validate_on_submit():
+        tempcontroller.setpoint = float(form.setpoint.data)
+    else:
+        form.setpoint.data = tempcontroller.setpoint
+
+    datapoint_query = ProcessData.query.filter(ProcessData.brewjob == None)
+    graph_data = dict(
+        time=[],
+        temp=[],
+        temp_setpoint=[],
+        power=[]
+    )
+
+    # if datapoints more then only a point each minute
+    datapoint_count = datapoint_query.count()
+    datapoint_iterator = iter(datapoint_query)
+    logger.debug('current datapoint count: {}'.format(datapoint_count))
+    if datapoint_count > 3600:
+        datapoint_iterator = islice(datapoint_iterator, 0, None, 60)
+
+    for p in datapoint_iterator:
+        graph_data['time'].append(str(p.datetime))
+        graph_data['temp'].append(p.temp_actual)
+        graph_data['temp_setpoint'].append(p.temp_setpoint)
+        graph_data['power'].append(p.tempctrl_power)
+
+    return render_template(
+        'index.html', form=form, processdata=actual_processdata,
+        graph_data=graph_data
+    )
+
+
+@main.route('/receipes/create', methods=['GET', 'POST'])
+def create_receipe():
+    form = ReceipeForm()
+    receipe = Receipe()
+
+    if form.validate_on_submit():
+        receipe.name = form.name.data
+        db.session.add(receipe)
+        db.session.commit()
+
+        return redirect(url_for('main.index'))
+
+    return render_template('receipe/add.html', form=form,
+                           receipe=receipe,
+                           processdata=actual_processdata)
+
+
+@main.route('/receipes/edit/<receipe_id>', methods=['GET', 'POST'])
+def edit_receipe(receipe_id):
+    receipe = Receipe.query.filter(Receipe.id == receipe_id).first_or_404()
+    form = ReceipeForm(obj=receipe)
+
+    if form.validate_on_submit():
+        receipe.name = form.name.data
+        db.session.add(receipe)
+        db.session.commit()
+
+    return render_template('receipe/edit.html', form=form,
+                           receipe=receipe,
+                           processdata=actual_processdata)
+
+
+@main.route('/settings/tempcontroller.html', methods=['GET', 'POST'])
+def tempcontroller_settings():
+    settings = TempCtrlSettings.query.first_or_404()
+    form = TempCtrlSettingsForm(obj=settings)
+    if form.validate_on_submit():
+        settings.kp = float(form.kp.data)
+        settings.tn = float(form.tn.data)
+        settings.duty_cycle = float(form.duty_cycle.data)
+        db.session.add(settings)
+        db.session.commit()
+        tempcontroller.load_settings()
+        return redirect(url_for('main.index'))
+    return render_template('settings/tempcontroller.html', form=form,
+                           processdata=actual_processdata)
+
+
+@main.route('/receipes/_list')
+def ajax_list_receipes():
+    receipes = Receipe.query.all()
+    receipe_list = []
+    for receipe in receipes:
+        receipe_list.append(dict(id=receipe.id, name=receipe.name))
+    return json.dumps(receipe_list)
+
+
+@main.route('/receipes/_add_step', methods=['POST'])
+def ajax_add_step():
+    receipe_id = int(request.form['receipe_id'])
+    receipe = Receipe.query.filter_by(id=receipe_id).first()
+    if receipe is None:
+        return '{"status": "error"}'
+
+    step = Step()
+    step.receipe = receipe
+    step.name = request.form['name']
+    step.setpoint = request.form['setpoint']
+    step.duration = request.form['duration']
+    step.comment = request.form['comment']
+    step.enable_mixer = request.form['enable_mixer']
+    db.session.add(step)
+    db.session.commit()
+    logger.debug('added step')
+    return json.dumps('{"status": "ok"}')
+
+
+@main.route('/steps/add', methods=['GET', 'POST'])
+def add_step(receipe_id):
+    pass
+
+
+@socketio.on('enable_tempctrl')
+def handle_enable_tempctrl(json):
+    enabled = json['data']
+    tempcontroller.enabled = enabled
+
+
+@socketio.on('enable_mixer')
+def handle_enable_mixer(json):
+    enabled = json['data']
+    mixer.enabled = enabled
+
+
+@socketio.on('shutdown')
+def handle_shutdown():
+    shutdown()

@@ -12,7 +12,7 @@ from wtforms import DecimalField, IntegerField, TextField, TextAreaField, \
 from wtforms.validators import required, Length, NumberRange
 
 
-class TempForm(Form):
+class TempCtrlSettingsForm(Form):
     setpoint = DecimalField("Sollwert:", places=1)
     manual_power = DecimalField("Leistung:", places=0)
     mode = SelectField("Modus:", choices=[
@@ -27,7 +27,3 @@ class EditForm(Form):
     setpoint = IntegerField('Temperatur:', [required(), NumberRange(20, 110)])
     timer = IntegerField('Timer:', [NumberRange(0, 120)])
     comment = TextAreaField('Kommentar:')
-
-
-class MainForm(Form):
-    setpoint = DecimalField("Sollwert:", places=1)
